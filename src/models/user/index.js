@@ -55,7 +55,6 @@ userSchema.plugin(methods.generateJwt)
 // plug in static class methods
 
 userSchema.plugin(statics.findAllUsers)
-userSchema.plugin(statics.findUserById)
 userSchema.plugin(statics.updateUser)
 userSchema.plugin(statics.deleteUser)
 
