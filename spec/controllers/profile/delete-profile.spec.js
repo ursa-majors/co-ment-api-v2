@@ -1,11 +1,11 @@
 'use strict'
 
-const User = require('../../../models/user')
-const Post = require('../../../models/post')
-const deleteProfile = require('../../../controllers/profile/delete-profile')
+const User = require('../../../src/models/user')
+const Post = require('../../../src/models/post')
+const deleteProfile = require('../../../src/controllers/profile/delete-profile')
 
-jest.mock('../../../models/user')
-jest.mock('../../../models/post')
+jest.mock('../../../src/models/user')
+jest.mock('../../../src/models/post')
 
 const log = {}
 const req = {

@@ -1,9 +1,9 @@
 'use strict'
 
-const User = require('../../../models/user')
-const getProfiles = require('../../../controllers/profile/get-profiles')
+const User = require('../../../src/models/user')
+const getProfiles = require('../../../src/controllers/profile/get-profiles')
 
-jest.mock('../../../models/user')
+jest.mock('../../../src/models/user')
 
 const log = {}
 const req = {

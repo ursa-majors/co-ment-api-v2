@@ -1,6 +1,6 @@
 'use strict'
 
-const maskAuthHeader = require('../../utils/mask-auth-header')
+const maskAuthHeader = require('../../src/utils/mask-auth-header')
 
 const sanitized = '<MASKED>'
 const authorization = 'Bearer eyJhbGciOiJIUz.X4AOGU-_Vkbh8BV-krjrgA_o'
