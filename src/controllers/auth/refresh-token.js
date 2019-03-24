@@ -11,7 +11,7 @@ const { errorWithStatus } = require('../../utils')
 //   Returns: user profile and new JWT on success
 exports = module.exports = async function refreshToken (req, res, next) {
   try {
-    const user = await User.findUserById({ userId: req.token._id })
+    const user = await User.findById(req.token._id).exec()
     if (!user) {
       return next(errorWithStatus(new Error('User not found'), 404))
     }

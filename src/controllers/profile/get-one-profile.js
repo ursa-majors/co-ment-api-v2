@@ -13,7 +13,7 @@ exports = module.exports = async function getOneProfile (req, res, next) {
   const userId = req.params.id
 
   try {
-    const profile = await User.findUserById({ userId, projection })
+    const profile = await User.findBy(userId, projection)
     if (!profile) {
       return res.status(404).json({ userId, message: `User profile not found` })
     }

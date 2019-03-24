@@ -32,7 +32,7 @@ exports = module.exports = async function login (req, res, next) {
 
     try {
       const projection = { hash: 0, salt: 0, signupKey: 0 }
-      const profile = await User.findUserById({ userId: user._id, projection })
+      const profile = await User.findById(user._id, projection).exec()
       if (!profile) throw errorWithStatus(new Error('User not found'), 404)
       // generate JWT and respond
       const token = profile.generateJWT()

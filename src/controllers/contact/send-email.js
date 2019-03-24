@@ -1,13 +1,11 @@
 'use strict'
 
-const User = require('../models/user')
-const { errorWithStatus } = require('../utils')
-const sanitize = require('../utils/sanitizer')
-const mailer = require('../utils/mailer')
-const emailTpl = require('../utils/mailtemplates')
-const { makeSignupKey, makeValidationUrl, makeBoilerplate } = require('../utils/mailutils')
-
-/* ============================ ROUTE HANDLERS ============================= */
+const User = require('../../models/user')
+const { errorWithStatus } = require('../../utils')
+const sanitize = require('../../utils/sanitizer')
+const mailer = require('../../utils/mailer')
+const emailTpl = require('../../utils/mailtemplates')
+const { makeBoilerplate } = require('../../utils/mailutils')
 
 // SEND EMAIL
 //   Example: POST >> /api/sendemail
@@ -24,7 +22,7 @@ const { makeSignupKey, makeValidationUrl, makeBoilerplate } = require('../utils/
 //          connectionId : String
 //        }
 //   Returns: success message on success
-async function sendEmail (req, res, next) {
+exports = module.exports = async function sendEmail (req, res, next) {
   // prohibit users from contacing themselves
   if (req.token.username === req.body.recipient) {
     return res.status(400).json({ message: 'You cannot contact yourself!' })
@@ -33,7 +31,7 @@ async function sendEmail (req, res, next) {
   try {
     // find the sender & recipient
     const [sender, recipient] = Promise.all([
-      await User.findUserById({ userId: req.token._id }),
+      await User.findById(req.token._id).exec(),
       await User.findOne({ username: req.body.recipient }).exec()
     ])
 
@@ -69,36 +67,3 @@ async function sendEmail (req, res, next) {
     return next(err)
   }
 }
-
-// RESEND VALIDATION EMAIL
-//   Example: GET >> /api/resendvalidation
-//   Secured: yes, valid JWT required
-//   Expects:
-//     1) '_id' from JWT token
-//   Returns: success message on success
-async function resendValidation (req, res, next) {
-  const target = { _id: req.token._id }
-  const updates = { signupKey: makeSignupKey() }
-  const options = { new: true }
-
-  try {
-    const user = await User.findOneAndUpdate(target, updates, options).exec()
-    if (!user) throw errorWithStatus(new Error('User not found'), 404)
-
-    const url = makeValidationUrl(user._id, user.signupKey.key)
-    const subject = 'co/ment - Email verification required'
-    const body = {
-      type: 'html',
-      text: emailTpl.validationTemplate(url, user._id)
-    }
-
-    mailer(user.email, subject, body)
-    return res.status(200).json({ message: 'Email validation sent successfully.' })
-  } catch (err) {
-    return next(err)
-  }
-}
-
-/* ============================== EXPORT API =============================== */
-
-module.exports = { sendEmail, resendValidation }

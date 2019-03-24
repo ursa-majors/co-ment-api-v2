@@ -3,10 +3,10 @@
 const router = require('express').Router()
 
 const profileCtrl = require('../controllers/profile')
-const postCtrl = require('../controllers/post.ctrl')
-const contactCtrl = require('../controllers/contact.ctrl')
-const connectionCtrl = require('../controllers/connection.ctrl')
-const conversationCtrl = require('../controllers/conversation.ctrl')
+const postCtrl = require('../controllers/post')
+const contactCtrl = require('../controllers/contact')
+const connectionCtrl = require('../controllers/connection')
+const conversationCtrl = require('../controllers/conversation')
 
 const { authMiddleware, checkValidated } = require('../middleware')
 
@@ -33,7 +33,7 @@ router.get('/posts', postCtrl.getPosts)
 
 // Increment Post views
 // Returns success status code; returns no data
-router.put('/posts/:id/viewsplusplus', postCtrl.incPostViews)
+router.put('/posts/:id/viewsplusplus', postCtrl.incrementViews)
 
 // Resend user validation email
 // Returns success message
@@ -56,7 +56,7 @@ router.put('/posts/:id', postCtrl.updatePost)
 
 // Increment or decrement a post's likes
 // Returns sucess status code only
-router.put('/posts/:id/likes', postCtrl.updatePostLikes)
+router.put('/posts/:id/likes', postCtrl.updateLikes)
 
 // Delete a post
 // Returns deleted post object
