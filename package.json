@@ -1,6 +1,6 @@
 {
   "name": "co-ment-api",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "co/ment API",
   "main": "server.js",
   "scripts": {
