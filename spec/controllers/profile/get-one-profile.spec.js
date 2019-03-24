@@ -1,9 +1,9 @@
 'use strict'
 
-const User = require('../../../models/user')
-const getOneProfile = require('../../../controllers/profile/get-one-profile')
+const User = require('../../../src/models/user')
+const getOneProfile = require('../../../src/controllers/profile/get-one-profile')
 
-jest.mock('../../../models/user')
+jest.mock('../../../src/models/user')
 
 const log = {}
 const req = {
@@ -27,7 +27,7 @@ describe('getOneProfile', () => {
     req.params.id = userId
     User.findById = jest.fn().mockResolvedValue(expect.any(Object))
     await getOneProfile(req, res, next)
-    expect(User.findById).toHaveBeenCalledWith(userId)
+    expect(User.findById).toHaveBeenCalledWith(userId, expect.any(Object))
     expect(res.status).toHaveBeenCalledTimes(1)
     expect(res.status).toHaveBeenCalledWith(200)
     expect(res.json).toHaveBeenCalledTimes(1)
