@@ -2,19 +2,9 @@
 
 const User = require('../../../src/models/user')
 const getOneProfile = require('../../../src/controllers/profile/get-one-profile')
+const { req, res, next } = require('../../fixtures/req-res-next')
 
 jest.mock('../../../src/models/user')
-
-const log = {}
-const req = {
-  params: {},
-  log
-}
-const res = {
-  status: jest.fn(function () { return this }),
-  json: jest.fn()
-}
-const next = jest.fn()
 
 describe('getOneProfile', () => {
   beforeEach(() => {

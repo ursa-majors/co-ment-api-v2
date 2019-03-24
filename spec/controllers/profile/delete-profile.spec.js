@@ -3,21 +3,10 @@
 const User = require('../../../src/models/user')
 const Post = require('../../../src/models/post')
 const deleteProfile = require('../../../src/controllers/profile/delete-profile')
+const { req, res, next } = require('../../fixtures/req-res-next')
 
 jest.mock('../../../src/models/user')
 jest.mock('../../../src/models/post')
-
-const log = {}
-const req = {
-  params: {},
-  token: {},
-  log
-}
-const res = {
-  status: jest.fn(function () { return this }),
-  json: jest.fn()
-}
-const next = jest.fn()
 
 describe('deleteProfile', () => {
   beforeEach(() => {
