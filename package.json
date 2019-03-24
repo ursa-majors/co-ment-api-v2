@@ -59,7 +59,8 @@
       }
     },
     "roots": [
-      "./spec"
+      "<rootDir>/src/",
+      "<rootDir>/spec/"
     ],
     "testEnvironment": "node",
     "verbose": true

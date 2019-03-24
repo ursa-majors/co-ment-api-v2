@@ -1,6 +1,6 @@
 'use strict'
 
-const findObjProperty = require('../../utils/find-obj-property')
+const findObjProperty = require('../../src/utils/find-obj-property')
 
 describe('findObjProperty', () => {
   it('should return property from regex', () => {

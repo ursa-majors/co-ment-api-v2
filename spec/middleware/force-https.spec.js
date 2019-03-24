@@ -1,6 +1,6 @@
 'use strict'
 
-const forceHttps = require('../../middleware/force-https')
+const forceHttps = require('../../src/middleware/force-https')
 
 describe('forceHttps middleware', () => {
   let req, res, next
