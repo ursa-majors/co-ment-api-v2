@@ -9,14 +9,14 @@ const { errorWithStatus } = require('../../utils')
 //   Expects:
 //     1) author '_id' from JWT token
 //     2) request body properties : {
-//          action              : Boolean
-//          author              : String
-//          role                : String
-//          title               : String
-//          body                : String
-//          excerpt             : String
-//          keywords            : Array
-//          availability        : String
+//          action       : Boolean
+//          author       : String
+//          role         : String
+//          title        : String
+//          body         : String
+//          excerpt      : String
+//          keywords     : Array
+//          availability : String
 //        }
 //   Returns: success message & updated post on success
 exports = module.exports = async function updatePost (req, res, next) {
