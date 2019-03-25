@@ -21,6 +21,7 @@
     "express": "^4.16.3",
     "express-jwt": "^5.3.1",
     "jsonwebtoken": "^8.5.0",
+    "lodash": "^4.17.11",
     "mongoose": "^5.4.19",
     "nodemailer": "^4.1.0",
     "nodemailer-smtp-transport": "^2.7.4",
@@ -46,7 +47,7 @@
   "jest": {
     "collectCoverage": false,
     "collectCoverageFrom": [
-      "**/*.{js,jsx}",
+      "src/**/*.{js,jsx}",
       "!**/node_modules/**"
     ],
     "coverageDirectory": "./coverage",
