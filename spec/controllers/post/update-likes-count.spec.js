@@ -29,10 +29,12 @@ const mockPost = {
 }
 
 describe('updatePostLikes', () => {
-  let req, res, next
+  let req, res, next, post, user
 
   beforeEach(() => {
     jest.clearAllMocks()
+    post = _cloneDeep(mockPost)
+    user = _cloneDeep(mockUser)
     req = _cloneDeep(reqResNext.req)
     res = _cloneDeep(reqResNext.res)
     res.end = jest.fn()
@@ -46,9 +48,6 @@ describe('updatePostLikes', () => {
     req.token._id = userId
     req.params.id = postId
     req.query.action = plusPlus
-
-    const post = _cloneDeep(mockPost)
-    const user = _cloneDeep(mockUser)
 
     // mock model static methods
     Post.exec = jest.fn().mockResolvedValue(post)
@@ -70,8 +69,6 @@ describe('updatePostLikes', () => {
     req.params.id = postId
     req.query.action = minusMinus
 
-    const post = _cloneDeep(mockPost)
-    const user = _cloneDeep(mockUser)
     post.meta.likes = 1
     user.likedPosts = [ postId ]
 
@@ -95,8 +92,6 @@ describe('updatePostLikes', () => {
     req.params.id = postId
     req.query.action = plusPlus
 
-    const post = _cloneDeep(mockPost)
-    const user = _cloneDeep(mockUser)
     post.meta.likes = 1
     user.likedPosts = [ postId ]
 
@@ -120,8 +115,6 @@ describe('updatePostLikes', () => {
     req.params.id = postId
     req.query.action = minusMinus
 
-    const post = _cloneDeep(mockPost)
-    const user = _cloneDeep(mockUser)
     post.meta.likes = 1
     user.likedPosts = []
 
@@ -143,11 +136,9 @@ describe('updatePostLikes', () => {
     expect.assertions(7)
     req.token._id = userId
     req.params.id = postId
-    req.query.action = minusMinus
+    req.query.action = plusPlus
 
-    const post = _cloneDeep(mockPost)
-    const user = _cloneDeep(mockUser)
-    post.author = mockUser
+    post.author = userId
 
     // mock model static methods
     Post.exec = jest.fn().mockResolvedValue(post)

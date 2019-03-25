@@ -39,7 +39,29 @@ describe('deleteProfile', () => {
     expect(res.json).toHaveBeenCalledWith(expect.any(Object))
   })
 
-  it('should call next with 404 error if no profile deleted', async () => {
+  it('should call next with 403 error if trying to delete another users post', async () => {
+    expect.assertions(6)
+    const userId = '123'
+    const name = 'Leroy'
+    req.params.id = userId
+    req.token._id = 'not123'
+    req.token.username = name
+    User.deleteUser = jest.fn()
+    Post.deletePostsByAuthor = jest.fn()
+
+    await deleteProfile(req, res, next)
+    expect(User.deleteUser).not.toHaveBeenCalled()
+    expect(Post.deletePostsByAuthor).not.toHaveBeenCalled()
+    expect(next).toHaveBeenCalledTimes(1)
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({
+      status: 403,
+      message: 'Delete profile not permitted'
+    }))
+    expect(res.status).not.toHaveBeenCalled()
+    expect(res.json).not.toHaveBeenCalled()
+  })
+
+  it('should call next with 404 error if no profile found', async () => {
     expect.assertions(7)
     const userId = '123'
     const name = 'Leroy'
@@ -65,7 +87,7 @@ describe('deleteProfile', () => {
     expect(res.json).not.toHaveBeenCalled()
   })
 
-  it('should call next with 404 error if no profile deleted', async () => {
+  it('should call next with 500 error if no profile deleted', async () => {
     expect.assertions(8)
     const userId = '123'
     const name = 'Leroy'
