@@ -5,6 +5,7 @@
 const req = {
   body: {},
   params: {},
+  query: {},
   token: {},
   log: {
     info: jest.fn(),
