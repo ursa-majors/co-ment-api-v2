@@ -18,7 +18,7 @@ const mailUtils = require('../../utils/mailutils')
 exports = module.exports = async function sendPwReset (req, res, next) {
   // generate reset key
   const { username } = req.body
-  if (!username) return next(errorWithStatus(new Error('Missing required username')), 400)
+  if (!username) return next(errorWithStatus(new Error('Missing required username'), 400))
   const resetKey = mailUtils.makeSignupKey()
 
   try {
@@ -35,7 +35,7 @@ exports = module.exports = async function sendPwReset (req, res, next) {
     }
 
     // send password reset email
-    sendPWResetEmail(emailParams)
+    sendPWResetEmail(req.log, emailParams)
 
     return res.status(200).json({ message: 'Password Reset email sent' })
   } catch (err) {
@@ -47,12 +47,12 @@ exports = module.exports = async function sendPwReset (req, res, next) {
 
 /**
  * Dispatch new password reset email
- * @param   {string}   key         randomly generated key
- * @param   {string}   toEmail    user/recipient email address
- * @param   {string}   recUserId  user/recipient _id
+ * @param  {String}  key         randomly generated key
+ * @param  {String}  toEmail    user/recipient email address
+ * @param  {String}  recUserId  user/recipient _id
  */
-function sendPWResetEmail ({ key, toEmail, recUserId }) {
-  console.log('pwreset', { key, toEmail, recUserId })
+function sendPWResetEmail (logger, { key, toEmail, recUserId }) {
+  logger.info({ key, toEmail, recUserId }, 'Sending PW reset email')
   const url = `https://co-ment.glitch.me/resetpassword/${key}`
   const subject = 'co/ment - Password Reset Request'
   const body = {
@@ -62,7 +62,7 @@ function sendPWResetEmail ({ key, toEmail, recUserId }) {
 
   try {
     mailer(toEmail, subject, body)
-    console.log('Email validation sent successfully.')
+    logger.info('Email validation sent successfully.')
   } catch (err) {
     throw err
   }

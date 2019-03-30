@@ -17,12 +17,10 @@ const { errorWithStatus } = require('../../utils')
 exports = module.exports = async function login (req, res, next) {
   // ensure required inputs exist
   const { username, password } = req.body
-  if (!username) return next(errorWithStatus(new Error('Missing required username')), 400)
-  if (!password) return next(errorWithStatus(new Error('Missing required password')), 400)
+  if (!username) return next(errorWithStatus(new Error('Missing required username'), 400))
+  if (!password) return next(errorWithStatus(new Error('Missing required password'), 400))
 
   passport.authenticate('local', async (err, user, info) => {
-    console.log('line 24')
-    console.log({ err, user, info })
     if (err) { return next(err) }
 
     // if auth failed, there will be no user - fail

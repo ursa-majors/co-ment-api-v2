@@ -20,7 +20,7 @@ const mailUtils = require('../../utils/mailutils')
 exports = module.exports = async function register (req, res, next) {
   // ensure required inputs exist
   if (!req.body.username || !req.body.password || !req.body.email) {
-    return res.status(400).json({ 'message': 'Please complete all required fields.' })
+    return next(errorWithStatus(new Error('Please complete all required fields'), 400))
   }
 
   const target = {
@@ -65,7 +65,7 @@ exports = module.exports = async function register (req, res, next) {
     }
 
     // send validation email, passing email param map
-    sendValidationEmail(emailParams)
+    sendValidationEmail(req.log, emailParams)
 
     // generate auth token
     const token = savedUser.generateJWT()
@@ -81,11 +81,11 @@ exports = module.exports = async function register (req, res, next) {
 
 /**
  * Dispatch new user validation email
- * @param   {string}  key       randomly generated key
- * @param   {string}  toEmail   user/recipient email address
- * @param   {string}  toUserId  new user's _id
+ * @param  {String}  key       randomly generated key
+ * @param  {String}  toEmail   user/recipient email address
+ * @param  {String}  toUserId  new user's _id
  */
-function sendValidationEmail ({ key, toEmail, toUserId }) {
+function sendValidationEmail (logger, { key, toEmail, toUserId }) {
   const url = mailUtils.makeValidationUrl(toUserId, key)
   const subject = 'co/ment - Email verification required'
   const body = {
@@ -95,7 +95,7 @@ function sendValidationEmail ({ key, toEmail, toUserId }) {
 
   try {
     mailer(toEmail, subject, body)
-    console.log('Email validation sent successfully.')
+    logger.info('Email validation sent successfully.')
   } catch (err) {
     throw err
   }

@@ -15,9 +15,9 @@ const { errorWithStatus } = require('../../utils')
 //   Returns: success status & message on success
 exports = module.exports = async function resetPassword (req, res, next) {
   const { username, password, key } = req.body
-  if (!username) return next(errorWithStatus(new Error('Missing required username')), 400)
-  if (!password) return next(errorWithStatus(new Error('Missing required password')), 400)
-  if (!key) return next(errorWithStatus(new Error('Missing required key')), 400)
+  if (!username) return next(errorWithStatus(new Error('Missing required username'), 400))
+  if (!password) return next(errorWithStatus(new Error('Missing required password'), 400))
+  if (!key) return next(errorWithStatus(new Error('Missing required key'), 400))
 
   try {
     const user = await User.findOne({ username }).exec()
