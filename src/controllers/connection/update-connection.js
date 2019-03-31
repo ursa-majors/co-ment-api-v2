@@ -2,22 +2,14 @@
 
 const Connection = require('../../models/connection')
 
-// Update a connection record's status & status date
-//   Example: POST >> /api/updateconnection
-//   Secured: yes, valid JWT required
-//   Expects:
-//     1) request body properties : {
-//          type : String
-//        }
-//   Returns: updated connection record on success
-exports = module.exports = async function updateConnection (req, res, next) {
-  const target = { _id: req.params.id }
-  const { type } = req.body
+/**
+ * Update a connection record's status & status date
+ * Secured - valid JWT required
+ * @returns  {Object}  Updated connection record
+ */
+exports = module.exports = async function updateConnection ({ connId, type }) {
+  const target = { _id: connId }
 
-  try {
-    const conn = await Connection.updateConnectionStatus({ target, type })
-    return res.status(200).json({ conn })
-  } catch (err) {
-    return next(err)
-  }
+  const conn = await Connection.updateConnectionStatus({ target, type })
+  return { conn }
 }

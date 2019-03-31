@@ -2,50 +2,38 @@
 
 const User = require('../../../src/models/user')
 const getOneProfile = require('../../../src/controllers/profile/get-one-profile')
-const { req, res, next } = require('../../fixtures/req-res-next')
 
 jest.mock('../../../src/models/user')
 
 describe('getOneProfile', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    User.findById = jest.fn(() => User)
   })
 
-  it('should return 200 & user profile if found', async () => {
-    expect.assertions(5)
+  it('should return user profile on success', async () => {
+    expect.assertions(2)
     const userId = '123'
-    req.params.id = userId
-    User.findById = jest.fn().mockResolvedValue(expect.any(Object))
-    await getOneProfile(req, res, next)
+    User.exec = jest.fn().mockResolvedValue(expect.any(Object))
+    const actual = await getOneProfile({ userId })
     expect(User.findById).toHaveBeenCalledWith(userId, expect.any(Object))
-    expect(res.status).toHaveBeenCalledTimes(1)
-    expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledTimes(1)
-    expect(res.json).toHaveBeenCalledWith(expect.any(Object))
+    expect(actual).toEqual(expect.any(Object))
   })
 
-  it('should return 404 & message if no profile found', async () => {
-    expect.assertions(4)
-    req.params.id = '404'
-    User.findById = jest.fn().mockResolvedValue(undefined)
-    await getOneProfile(req, res, next)
-    expect(res.status).toHaveBeenCalledTimes(1)
-    expect(res.status).toHaveBeenCalledWith(404)
-    expect(res.json).toHaveBeenCalledTimes(1)
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      message: `User profile not found`
-    }))
+  it('should throw with 404 status if no profile found', async () => {
+    const userId = '404'
+    User.exec = jest.fn().mockResolvedValue(undefined)
+    await expect(getOneProfile({ userId })).rejects
+      .toThrow(expect.objectContaining({
+        status: 404,
+        message: `User profile not found`
+      }))
   })
 
   it('should handle database errors', async () => {
-    expect.assertions(4)
-    User.findById = jest.fn().mockRejectedValue(new Error('boom'))
-    await getOneProfile(req, res, next)
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      message: 'boom'
-    }))
+    const userId = '123'
+    User.exec = jest.fn().mockRejectedValue(new Error('boom'))
+    await expect(getOneProfile({ userId })).rejects
+      .toThrow(/boom/)
   })
 })

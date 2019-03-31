@@ -2,24 +2,17 @@
 
 const Post = require('../../models/post')
 
-// INCREMENT A POST'S VIEW COUNT
-//   Example: PUT >> /api/posts/597dd8665229970e99c6ab55/viewsplusplus
-//   Secured: yes, valid JWT required
-//   Expects:
-//     1) post 'id' from request params
-//     2) user '_id' from JWT
-//   Returns: success status only
-exports = module.exports = async function incrementViews (req, res, next) {
-  // match only if post author NOT EQUAL to requesting user
+/**
+ * Increment a post's views count
+ * Secured - valid JWT required
+ * @returns  {Object}  Success message only
+ */
+exports = module.exports = async function incrementViews ({ postId, userId }) {
   const target = {
-    _id: req.params.id,
-    author: { $ne: req.token._id }
+    _id: postId,
+    author: { $ne: userId } // match if post author !== requesting user
   }
 
-  try {
-    await Post.incrementViews({ target })
-    return res.status(200).end()
-  } catch (err) {
-    return next(err)
-  }
+  const result = await Post.incrementViews({ target })
+  return { message: result ? 'Post updated' : 'Post not updated' }
 }

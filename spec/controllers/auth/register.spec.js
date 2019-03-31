@@ -1,13 +1,18 @@
 'use strict'
 
-const _cloneDeep = require('lodash/cloneDeep')
 const mailer = require('../../../src/utils/mailer')
 const User = require('../../../src/models/user')
-const reqResNext = require('../../fixtures/req-res-next')
 const register = require('../../../src/controllers/auth/register')
 
 jest.mock('../../../src/utils/mailer', () => jest.fn())
 jest.mock('../../../src/models/user')
+
+// mock injectable logger
+const log = {
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn()
+}
 
 const userId = 'someMongodbObjectId'
 const mockJwt = '09asd098asd098asd098asd'
@@ -26,144 +31,137 @@ const newUser = {
 }
 
 describe('register', () => {
-  let req, res, next
-
   beforeEach(() => {
     jest.clearAllMocks()
-    req = _cloneDeep(reqResNext.req)
-    res = _cloneDeep(reqResNext.res)
-    next = reqResNext.next
     User.findOne = jest.fn(() => User)
   })
 
   it('should create a new user', async () => {
-    expect.assertions(9)
-    req.body.email = 'test@example.com'
-    req.body.username = 'newUsername'
-    req.body.password = 'newPassword'
+    expect.assertions(5)
     User.exec = jest.fn()
     User.prototype.hashPassword = jest.fn()
     User.prototype.save = jest.fn().mockResolvedValue(newUser)
+    const body = {
+      email: 'test@example.com',
+      username: 'newUsername',
+      password: 'newPassword'
+    }
 
-    await register(req, res, next)
+    const actual = await register({ body, log })
     expect(User.prototype.hashPassword).toHaveBeenCalledTimes(1)
     expect(User.prototype.save).toHaveBeenCalledTimes(1)
     expect(mailer).toHaveBeenCalledTimes(1)
-    expect(req.log.info).toHaveBeenCalledTimes(1)
     expect(newUser.generateJWT).toHaveBeenCalledTimes(1)
-    expect(res.status).toHaveBeenCalledTimes(1)
-    expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledTimes(1)
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+    expect(actual).toEqual(expect.objectContaining({
       profile: expect.any(Object),
       token: expect.any(String)
     }))
   })
 
-  it('should call next() w/ error if username already exists', async () => {
-    expect.assertions(4)
-    req.body.email = 'no@no.com'
-    req.body.username = 'foundMe'
-    req.body.password = 'password'
-    User.findOne = jest.fn(() => User)
+  it('should throw if username already exists', async () => {
+    expect.assertions(5)
     User.exec = jest.fn().mockResolvedValue(foundUser)
+    User.prototype.hashPassword = jest.fn()
+    User.prototype.save = jest.fn().mockResolvedValue(newUser)
+    const body = {
+      email: 'no@no.com',
+      username: 'foundMe',
+      password: 'password'
+    }
 
-    await register(req, res, next)
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: 'Username already taken'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
+    await expect(register({ body, log })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Username already taken'
+      }))
+    expect(User.prototype.hashPassword).not.toHaveBeenCalled()
+    expect(User.prototype.save).not.toHaveBeenCalled()
+    expect(mailer).not.toHaveBeenCalled()
+    expect(newUser.generateJWT).not.toHaveBeenCalled()
   })
 
   it('should call next() w/ error if email already exists', async () => {
-    expect.assertions(4)
-    req.body.email = 'user@user.com'
-    req.body.username = 'username'
-    req.body.password = 'password'
-    User.findOne = jest.fn(() => User)
+    expect.assertions(5)
     User.exec = jest.fn().mockResolvedValue(foundUser)
+    User.prototype.hashPassword = jest.fn()
+    User.prototype.save = jest.fn().mockResolvedValue(newUser)
+    const body = {
+      email: 'user@user.com',
+      username: 'username',
+      password: 'password'
+    }
 
-    await register(req, res, next)
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: 'Email already registered'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
+    await expect(register({ body, log })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Email already registered'
+      }))
+    expect(User.prototype.hashPassword).not.toHaveBeenCalled()
+    expect(User.prototype.save).not.toHaveBeenCalled()
+    expect(mailer).not.toHaveBeenCalled()
+    expect(newUser.generateJWT).not.toHaveBeenCalled()
   })
 
-  it('should throw if missing username', () => {
-    expect.assertions(4)
-    req.body.email = 'user@user.com'
-    req.body.password = 'password'
-    register(req, res, next)
-
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: 'Please complete all required fields'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
+  it('should throw if missing username', async () => {
+    expect.assertions(1)
+    const body = {
+      email: 'user@user.com',
+      password: 'password'
+    }
+    await expect(register({ body, log })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Please complete all required fields'
+      }))
   })
 
-  it('should throw if missing email', () => {
-    expect.assertions(4)
-    req.body.username = 'username'
-    req.body.password = 'password'
-    register(req, res, next)
-
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: 'Please complete all required fields'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
+  it('should throw if missing email', async () => {
+    expect.assertions(1)
+    const body = {
+      username: 'username',
+      password: 'password'
+    }
+    await expect(register({ body, log })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Please complete all required fields'
+      }))
   })
 
-  it('should throw if missing password', () => {
-    expect.assertions(4)
-    req.body.email = 'user@user.com'
-    req.body.username = 'username'
-    register(req, res, next)
-
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: 'Please complete all required fields'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
+  it('should throw if missing password', async () => {
+    expect.assertions(1)
+    const body = {
+      email: 'user@user.com',
+      username: 'username'
+    }
+    await expect(register({ body, log })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Please complete all required fields'
+      }))
   })
 
   it('should handle errors thrown from mailer service', async () => {
-    expect.assertions(9)
-    req.body.email = 'test@example.com'
-    req.body.username = 'newUsername'
-    req.body.password = 'newPassword'
+    expect.assertions(5)
     User.exec = jest.fn()
     User.prototype.hashPassword = jest.fn()
     User.prototype.save = jest.fn().mockResolvedValue(newUser)
     mailer.mockImplementation(() => {
       throw new Error('mailer barfed')
     })
+    const body = {
+      email: 'user@user.com',
+      username: 'username',
+      password: 'password'
+    }
 
-    await register(req, res, next)
+    await expect(register({ body, log })).rejects
+      .toThrow(expect.objectContaining({
+        message: 'mailer barfed'
+      }))
     expect(User.prototype.hashPassword).toHaveBeenCalledTimes(1)
     expect(User.prototype.save).toHaveBeenCalledTimes(1)
     expect(mailer).toHaveBeenCalledTimes(1)
     expect(newUser.generateJWT).not.toHaveBeenCalled()
-    expect(req.log.info).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      message: 'mailer barfed'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
   })
 })

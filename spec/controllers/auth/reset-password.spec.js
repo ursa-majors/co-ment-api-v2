@@ -1,147 +1,85 @@
 'use strict'
 
-const _cloneDeep = require('lodash/cloneDeep')
 const User = require('../../../src/models/user')
-const reqResNext = require('../../fixtures/req-res-next')
 const resetPassword = require('../../../src/controllers/auth/reset-password')
 
 jest.mock('../../../src/models/user')
 
-const userName = 'userName'
+const username = 'username'
 const password = 'password'
 const key = '09asd098asd098asd098asd'
 const mockUser = {
   _id: 1,
-  userName,
+  username,
   passwordResetKey: { key },
   hashPassword: jest.fn(),
   save: jest.fn()
 }
 
 describe('refreshToken', () => {
-  let req, res, next
-
   beforeEach(() => {
     jest.clearAllMocks()
-    req = _cloneDeep(reqResNext.req)
-    res = _cloneDeep(reqResNext.res)
-    next = reqResNext.next
     User.findOne = jest.fn(() => User)
   })
 
-  it('should return 200 success message on success', async () => {
-    expect.assertions(5)
-    req.body.username = userName
-    req.body.password = password
-    req.body.key = key
+  it('should return success message on success', async () => {
     User.exec = jest.fn().mockResolvedValue(mockUser)
 
-    await resetPassword(req, res, next)
-    expect(res.status).toHaveBeenCalledTimes(1)
-    expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledTimes(1)
-    expect(res.json).toHaveBeenCalledWith({
+    const actual = await resetPassword({ username, password, key })
+    expect(actual).toEqual(expect.objectContaining({
       message: 'Password reset successful'
-    })
-    expect(next).not.toHaveBeenCalled()
+    }))
   })
 
-  it('should reject with 404 when user not found', async () => {
-    expect.assertions(5)
-    req.body.username = userName
-    req.body.password = password
-    req.body.key = key
+  it('should throw with 404 status when user not found', async () => {
     User.exec = jest.fn().mockResolvedValue(null)
 
-    await resetPassword(req, res, next)
-    expect(User.exec).toHaveBeenCalledTimes(1)
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 404,
-      message: expect.stringContaining('No user with that username')
-    }))
+    await expect(resetPassword({ username, password, key })).rejects
+      .toThrow(expect.objectContaining({
+        status: 404,
+        message: expect.stringContaining('No user with that username')
+      }))
   })
 
-  it('should reject with 400 when reset keys dont match', async () => {
-    expect.assertions(5)
-    req.body.username = userName
-    req.body.password = password
-    req.body.key = 'wrong key'
+  it('should throw with 400 status when reset keys dont match', async () => {
     User.exec = jest.fn().mockResolvedValue(mockUser)
+    const key = 'wrong key'
 
-    await resetPassword(req, res, next)
-    expect(User.exec).toHaveBeenCalledTimes(1)
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: expect.stringContaining('Invalid password reset key')
-    }))
+    await expect(resetPassword({ username, password, key })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: expect.stringContaining('Invalid password reset key')
+      }))
   })
 
   it('should handle errors thrown from User DB method calls', async () => {
-    expect.assertions(5)
-    req.body.username = userName
-    req.body.password = password
-    req.body.key = key
-    User.exec = jest.fn().mockRejectedValue(new Error('Reset Borked'))
+    User.exec = jest.fn().mockRejectedValue(new Error('Reset barfed'))
 
-    await resetPassword(req, res, next)
-    expect(User.exec).toHaveBeenCalledTimes(1)
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      message: expect.stringContaining('Reset Borked')
-    }))
+    await expect(resetPassword({ username, password, key })).rejects
+      .toThrow(/Reset barfed/)
   })
 
-  it('should call next with error when username is mssing', async () => {
-    req.body.username = undefined
-    req.body.password = password
-    req.body.key = key
-
-    await resetPassword(req, res, next)
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: expect.stringContaining('Missing required username')
-    }))
+  it('should throw with 400 status when username is mssing', async () => {
+    await expect(resetPassword({ password, key })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: expect.stringContaining('Missing required username')
+      }))
   })
 
-  it('should call next with error when password is mssing', async () => {
-    req.body.username = userName
-    req.body.password = undefined
-    req.body.key = key
-
-    await resetPassword(req, res, next)
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: expect.stringContaining('Missing required password')
-    }))
+  it('should throw with 400 status when password is mssing', async () => {
+    await expect(resetPassword({ username, key })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: expect.stringContaining('Missing required password')
+      }))
   })
 
-  it('should call next with error when key is mssing', async () => {
-    req.body.username = userName
-    req.body.password = password
-    req.body.key = undefined
-
-    await resetPassword(req, res, next)
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: expect.stringContaining('Missing required key')
-    }))
+  it('should throw with 400 status when key is mssing', async () => {
+    await expect(resetPassword({ username, password })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: expect.stringContaining('Missing required key')
+      }))
   })
-
 })

@@ -1,20 +1,15 @@
 'use strict'
 
 const Connection = require('../../models/connection')
+const { errorWithStatus } = require('../../utils')
 
-// GET CONNECTIONS
-//   Example: GET >> /api/connections
-//   Secured: yes, valid JWT required
-//   Expects:
-//     1) the user's _id from the JWT token
-//   Returns: array of user's connections
-exports = module.exports = async function getConnections (req, res, next) {
-  const target = req.token._id
-
-  try {
-    const connections = await Connection.findOwnConnections({ target })
-    return res.status(200).json({ connections })
-  } catch (err) {
-    return next(err)
-  }
+/**
+ * Get all user's connections
+ * Secured - valid JWT required
+ * @returns  {Array}  Of user connection objects
+ */
+exports = module.exports = async function getConnections ({ userId }) {
+  if (!userId) throw errorWithStatus(new Error('Missing required userId'), 400)
+  const connections = await Connection.findOwnConnections({ target: userId })
+  return connections
 }

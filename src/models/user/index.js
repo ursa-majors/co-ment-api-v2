@@ -2,7 +2,6 @@
 
 require('dotenv').config()
 const mongoose = require('mongoose')
-const passportLocalMongoose = require('passport-local-mongoose')
 const { statics, methods } = require('./plugins')
 
 const userSchema = new mongoose.Schema({
@@ -37,14 +36,12 @@ const userSchema = new mongoose.Schema({
     addPostReminder: { type: Date },
     addProfileReminder: { type: Date }
   },
-  hash: String,
-  salt: String
+  hash: { type: String, select: false },
+  salt: { type: String, select: false }
 },
 {
   timestamps: true
 })
-
-userSchema.plugin(passportLocalMongoose)
 
 // plug in instance methods
 

@@ -1,59 +1,83 @@
 'use strict'
 
-const passport = require('passport')
-const _cloneDeep = require('lodash/cloneDeep')
-const reqResNext = require('../../fixtures/req-res-next')
+const User = require('../../../src/models/user')
 const login = require('../../../src/controllers/auth/login')
 
+const mockToken = 'eyJhbGciOiJIUzI1.eyJfaWQiOiI1Yz.mitXdAfCqqpoFH63s'
+
+const foundUser = {
+  _id: '4c89e3285e0f7b214d29d03a',
+  username: 'jay',
+  email: 'user@example.com',
+  salt: '098asdlkj23098asdlj',
+  hash: 'sdlkj509asdlkjaf09ulkjasd89dsa',
+  generateJWT: jest.fn().mockReturnValue(mockToken),
+  toObject: jest.fn(function () { return this }),
+  validatePassword: jest.fn()
+}
+
 jest.mock('../../../src/models/user')
-jest.mock('passport')
 
 describe('login', () => {
-  let req, res, next
-
   beforeEach(() => {
     jest.clearAllMocks()
-    req = _cloneDeep(reqResNext.req)
-    res = _cloneDeep(reqResNext.res)
-    next = reqResNext.next
+    User.findOne = jest.fn(() => User)
   })
 
-  it('should call function returned from passport.authenticate', async () => {
-    req.body.password = 'password'
-    req.body.username = 'username'
-    const returnedFn = jest.fn()
-    passport.authenticate = jest.fn().mockReturnValue(returnedFn)
+  it('should return profile & token on success', async () => {
+    expect.assertions(3)
+    const password = 'password'
+    const username = 'username'
+    foundUser.validatePassword.mockReturnValue(true)
+    User.exec = jest.fn().mockResolvedValue(foundUser)
 
-    await login(req, res, next)
-    expect(returnedFn).toHaveBeenCalled()
-    expect(returnedFn).toHaveBeenCalledWith(req, res, next)
+    const actual = await login({ username, password })
+    expect(actual).toEqual({
+      profile: expect.any(Object),
+      token: mockToken
+    })
+    expect(actual.profile).not.toHaveProperty('hash')
+    expect(actual.profile).not.toHaveProperty('salt')
   })
 
-  it('should throw if missing username', () => {
-    expect.assertions(4)
-    req.body.password = 'password'
-    login(req, res, next)
-
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: 'Missing required username'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
+  it('should throw if missing username', async () => {
+    await expect(login({ password: '1234' })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Missing required username'
+      }))
   })
 
-  it('should throw if missing password', () => {
-    expect.assertions(4)
-    req.body.username = 'username'
-    login(req, res, next)
+  it('should throw if missing password', async () => {
+    await expect(login({ username: '1234' })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Missing required password'
+      }))
+  })
 
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 400,
-      message: 'Missing required password'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
+  it('should throw if no user found', async () => {
+    const password = 'password'
+    const username = 'username'
+    User.exec = jest.fn().mockResolvedValue(null)
+
+    await expect(login({ username, password })).rejects
+      .toThrow(expect.objectContaining({
+        status: 404,
+        message: 'User not found'
+      }))
+  })
+
+  it('should throw on invalid password', async () => {
+    const password = 'password'
+    const username = 'username'
+    foundUser.validatePassword.mockReturnValue(false)
+    User.exec = jest.fn().mockResolvedValue(foundUser)
+
+    await expect(login({ username, password })).rejects
+      .toThrow(expect.objectContaining({
+        status: 401,
+        message: 'Invalid password'
+      }))
   })
 })

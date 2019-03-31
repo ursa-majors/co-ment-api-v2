@@ -6,41 +6,30 @@ const mailer = require('../../utils/mailer')
 const emailTpl = require('../../utils/mailtemplates')
 const mailUtils = require('../../utils/mailutils')
 
-// SEND PW RESET EMAIL
-// Dispatches password reset email
-//   Example: POST >> /api/sendresetemail
-//   Secured: no
-//   Expects:
-//     1) request body params : {
-//          username : String
-//        }
-//   Returns: success status & message on success
-exports = module.exports = async function sendPwReset (req, res, next) {
-  // generate reset key
-  const { username } = req.body
-  if (!username) return next(errorWithStatus(new Error('Missing required username'), 400))
-  const resetKey = mailUtils.makeSignupKey()
+/**
+ * Send password reset email
+ * Secured: no
+ * @returns  {Object}  Success message
+ */
+exports = module.exports = async function sendPwReset ({ username, log }) {
+  if (!username) throw errorWithStatus(new Error('Missing required username'), 400)
 
-  try {
-    const user = await User.findOne({ username }).exec()
-    if (!user) throw errorWithStatus(new Error('No user with that username'), 404)
-    // store password reset key on user
-    user.passwordResetKey = resetKey
-    await user.save()
+  const user = await User.findOne({ username }).exec()
+  if (!user) throw errorWithStatus(new Error('No user with that username'), 404)
 
-    const emailParams = {
-      key: user.passwordResetKey.key,
-      toEmail: user.email,
-      recUserId: user._id
-    }
+  // generate & store new password reset key on user
+  user.passwordResetKey = mailUtils.makeSignupKey()
+  await user.save()
 
-    // send password reset email
-    sendPWResetEmail(req.log, emailParams)
-
-    return res.status(200).json({ message: 'Password Reset email sent' })
-  } catch (err) {
-    return next(err)
+  const emailParams = {
+    key: user.passwordResetKey.key,
+    toEmail: user.email,
+    recUserId: user._id
   }
+
+  sendPWResetEmail(log, emailParams)
+
+  return { message: 'Password Reset email sent' }
 }
 
 // helpers

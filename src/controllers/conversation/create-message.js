@@ -4,38 +4,36 @@ const Message = require('../../models/message')
 const User = require('../../models/user')
 const mailer = require('../../utils/mailer')
 const { unreadsReminder } = require('../../utils/mailtemplates')
+const { errorWithStatus } = require('../../utils')
 
-// CREATE NEW MESSAGE
-//   Example: POST >> /api/messages
-//   Secured: yes, valid JWT required
-//   Expects:
-//     1) user '_id' from JWT token
-//     2) request body properties
-//          recipientId  : String
-//          conversation : String
-//          messageBody  : String
-//        }
-//   Returns: new message object
-//   Triggers check for & send 'unreads available' email to recipient
-exports = module.exports = async function createMessage (req, res, next) {
+/**
+ * Create a new message in a conversation
+ * Triggers check for & send 'unreads available' email to recipient
+ * Secured - valid JWT required
+ * request body properties:
+ *   {String}  recipientId
+ *   {String}  conversation
+ *   {String}  messageBody
+ * @returns  {Object}  new message object
+ */
+exports = module.exports = async function createMessage ({ userId, body, log }) {
+  if (!userId) throw errorWithStatus(new Error('Missing required userId'), 400)
+  if (!body) throw errorWithStatus(new Error('Missing required body'), 400)
+
   const message = new Message({
-    conversation: req.body.conversation,
-    body: req.body.messageBody,
-    author: req.token._id,
-    recipient: req.body.recipientId,
+    conversation: body.conversation,
+    body: body.messageBody,
+    author: userId,
+    recipient: body.recipientId,
     originatedFrom: 'conversation'
   })
 
-  try {
-    await message.save()
-    // call utility to check for and send unreads waiting email
-    const didEmail = duckDuckSpam(message.recipient)
-    req.log.info(`${didEmail ? 'Did' : 'Did not'} email ${message.recipient}`)
+  await message.save()
+  // call utility to check for and send unreads waiting email
+  const didEmail = duckDuckSpam(message.recipient)
+  log.info(`${didEmail ? 'Did' : 'Did not'} email ${message.recipient}`)
 
-    return res.status(200).json({ message: message })
-  } catch (err) {
-    return next(err)
-  }
+  return { message: message }
 }
 
 // helpers

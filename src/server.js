@@ -4,20 +4,16 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const path = require('path')
 const compression = require('compression')
-const passport = require('passport')
-const LocalStrategy = require('passport-local').Strategy
 const mongoose = require('mongoose')
 
 const { getConnectionString, getConnectionOptions } = require('./db')
-const User = require('./models/user')
 
 const {
   requestMiddleware,
   loggerMiddleware,
   errorMiddleware,
   corsMiddleware,
-  forceHttpsMiddleware,
-  passportLocalStrategy
+  forceHttpsMiddleware
 } = require('./middleware')
 
 const app = express()
@@ -33,13 +29,9 @@ app.use(corsMiddleware())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, '/client/build/')))
-app.use(passport.initialize())
-passport.use(passportLocalStrategy(LocalStrategy, User))
 
-// routes
-app.use(`${basePath}/auth`, require('./routes/authroutes'))
-app.use(`${basePath}/api`, require('./routes/apiroutes'))
-app.use(`${basePath}/`, require('./routes/staticroutes'))
+// mount router
+app.use(`${basePath}`, require('./router'))
 
 // catch-all error handler
 app.use(errorMiddleware())

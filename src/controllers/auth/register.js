@@ -17,64 +17,60 @@ const mailUtils = require('../../utils/mailutils')
 //          email    : String
 //        }
 //   Returns: user profile object & JWT on success
-exports = module.exports = async function register (req, res, next) {
+exports = module.exports = async function register ({ body, log }) {
   // ensure required inputs exist
-  if (!req.body.username || !req.body.password || !req.body.email) {
-    return next(errorWithStatus(new Error('Please complete all required fields'), 400))
+  if (!body.username || !body.password || !body.email) {
+    throw errorWithStatus(new Error('Please complete all required fields'), 400)
   }
 
   const target = {
-    $or: [{ username: req.body.username }, { email: req.body.email }]
+    $or: [{ username: body.username }, { email: body.email }]
   }
 
-  try {
-    const user = await User.findOne(target).exec()
-    // finding a user means user already exists
-    if (user && user.username === req.body.username) {
-      throw errorWithStatus(new Error('Username already taken'), 400)
-    }
-    if (user && user.email === req.body.email) {
-      throw errorWithStatus(new Error('Email already registered'), 400)
-    }
-    // no user found; make a new one
-    const newUser = new User({
-      username: req.body.username,
-      email: req.body.email,
-      validated: false,
-      signupKey: mailUtils.makeSignupKey()
-    })
-
-    newUser.hashPassword(req.body.password)
-
-    // save new user to database
-    const savedUser = await newUser.save()
-
-    // build filtered user profile for later response
-    const profile = {
-      username: savedUser.username,
-      email: savedUser.email,
-      validated: savedUser.validated,
-      _id: savedUser._id
-    }
-
-    // build email parameter map
-    const emailParams = {
-      key: savedUser.signupKey.key,
-      toEmail: savedUser.email,
-      toUserId: savedUser._id
-    }
-
-    // send validation email, passing email param map
-    sendValidationEmail(req.log, emailParams)
-
-    // generate auth token
-    const token = savedUser.generateJWT()
-
-    // respond with profile & JWT
-    return res.status(200).json({ profile, token })
-  } catch (err) {
-    return next(err)
+  const user = await User.findOne(target).exec()
+  // finding a user means user already exists
+  if (user && user.username === body.username) {
+    throw errorWithStatus(new Error('Username already taken'), 400)
   }
+  if (user && user.email === body.email) {
+    throw errorWithStatus(new Error('Email already registered'), 400)
+  }
+  // no user found; make a new one
+  const newUser = new User({
+    username: body.username,
+    email: body.email,
+    validated: false,
+    signupKey: mailUtils.makeSignupKey()
+  })
+
+  newUser.hashPassword(body.password)
+
+  // save new user to database
+  const savedUser = await newUser.save()
+
+  // build filtered user profile for later response
+  const profile = {
+    username: savedUser.username,
+    email: savedUser.email,
+    validated: savedUser.validated,
+    _id: savedUser._id
+  }
+
+  // build email parameter map
+  const emailParams = {
+    key: savedUser.signupKey.key,
+    toEmail: savedUser.email,
+    toUserId: savedUser._id
+  }
+
+  // send validation email, passing email param map
+  sendValidationEmail(log, emailParams)
+
+  // generate auth token
+  const token = savedUser.generateJWT()
+
+  // respond with profile & JWT
+  return { profile, token }
 }
 
 // helpers

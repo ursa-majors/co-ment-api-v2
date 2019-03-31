@@ -5,7 +5,6 @@ exports = module.exports = Object.freeze({
   loggerMiddleware: require('./logger'),
   errorMiddleware: require('./error-handler'),
   checkValidated: require('./check-account-validated'),
-  passportLocalStrategy: require('./passport-local-strategy'),
   corsMiddleware: require('./cors'),
   forceHttpsMiddleware: require('./force-https'),
   authMiddleware: require('./verify-auth')

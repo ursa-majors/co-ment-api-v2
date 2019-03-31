@@ -3,7 +3,6 @@
 const User = require('../../../src/models/user')
 const Post = require('../../../src/models/post')
 const deleteProfile = require('../../../src/controllers/profile/delete-profile')
-const { req, res, next } = require('../../fixtures/req-res-next')
 
 jest.mock('../../../src/models/user')
 jest.mock('../../../src/models/post')
@@ -13,17 +12,15 @@ describe('deleteProfile', () => {
     jest.clearAllMocks()
   })
 
-  it('should return 200 & deleted profile on success', async () => {
-    expect.assertions(8)
+  it('should return deleted user profile on success', async () => {
+    expect.assertions(5)
     const userId = '123'
     const name = 'Leroy'
-    req.params.id = userId
-    req.token._id = userId
-    req.token.username = name
+    const token = { _id: userId, username: name }
     User.deleteUser = jest.fn().mockResolvedValue(expect.any(Object))
     Post.deletePostsByAuthor = jest.fn().mockResolvedValue(true)
 
-    await deleteProfile(req, res, next)
+    const actual = await deleteProfile({ userId, token })
     expect(User.deleteUser).toHaveBeenCalledTimes(1)
     expect(User.deleteUser).toHaveBeenCalledWith(expect.objectContaining({
       _id: userId,
@@ -33,71 +30,60 @@ describe('deleteProfile', () => {
     expect(Post.deletePostsByAuthor).toHaveBeenCalledWith(expect.objectContaining({
       authorId: userId
     }))
-    expect(res.status).toHaveBeenCalledTimes(1)
-    expect(res.status).toHaveBeenCalledWith(200)
-    expect(res.json).toHaveBeenCalledTimes(1)
-    expect(res.json).toHaveBeenCalledWith(expect.any(Object))
+    expect(actual).toEqual(expect.any(Object))
   })
 
-  it('should call next with 403 error if trying to delete another users post', async () => {
-    expect.assertions(6)
+  it('should throw with 403 status if trying to delete another users post', async () => {
+    expect.assertions(3)
     const userId = '123'
     const name = 'Leroy'
-    req.params.id = userId
-    req.token._id = 'not123'
-    req.token.username = name
+    const token = { _id: 'not123', username: name }
     User.deleteUser = jest.fn()
     Post.deletePostsByAuthor = jest.fn()
 
-    await deleteProfile(req, res, next)
+    await expect(deleteProfile({ userId, token })).rejects
+      .toThrow(expect.objectContaining({
+        status: 403,
+        message: 'Delete profile not permitted'
+      }))
     expect(User.deleteUser).not.toHaveBeenCalled()
     expect(Post.deletePostsByAuthor).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 403,
-      message: 'Delete profile not permitted'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
   })
 
-  it('should call next with 404 error if no profile found', async () => {
-    expect.assertions(7)
+  it('should throw with 404 status if no profile found', async () => {
+    expect.assertions(4)
     const userId = '123'
     const name = 'Leroy'
-    req.params.id = userId
-    req.token._id = userId
-    req.token.username = name
+    const token = { _id: userId, username: name }
     User.deleteUser = jest.fn().mockResolvedValue(undefined)
-    Post.deletePostsByAuthor = jest.fn().mockResolvedValue(true)
+    Post.deletePostsByAuthor = jest.fn()
 
-    await deleteProfile(req, res, next)
+    await expect(deleteProfile({ userId, token })).rejects
+      .toThrow(expect.objectContaining({
+        status: 404,
+        message: 'Delete error: user not found'
+      }))
     expect(User.deleteUser).toHaveBeenCalledTimes(1)
     expect(User.deleteUser).toHaveBeenCalledWith(expect.objectContaining({
       _id: userId,
       username: name
     }))
     expect(Post.deletePostsByAuthor).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 404,
-      message: 'Delete error: user not found'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
   })
 
-  it('should call next with 500 error if no profile deleted', async () => {
-    expect.assertions(8)
+  it('should throw with 500 status if posts are not deleted', async () => {
+    expect.assertions(5)
     const userId = '123'
     const name = 'Leroy'
-    req.params.id = userId
-    req.token._id = userId
-    req.token.username = name
+    const token = { _id: userId, username: name }
     User.deleteUser = jest.fn().mockResolvedValue(expect.any(Object))
     Post.deletePostsByAuthor = jest.fn().mockResolvedValue(false)
 
-    await deleteProfile(req, res, next)
+    await expect(deleteProfile({ userId, token })).rejects
+      .toThrow(expect.objectContaining({
+        status: 500,
+        message: 'Failed to delete posts'
+      }))
     expect(User.deleteUser).toHaveBeenCalledTimes(1)
     expect(User.deleteUser).toHaveBeenCalledWith(expect.objectContaining({
       _id: userId,
@@ -107,24 +93,14 @@ describe('deleteProfile', () => {
     expect(Post.deletePostsByAuthor).toHaveBeenCalledWith(expect.objectContaining({
       authorId: userId
     }))
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      status: 500,
-      message: 'Failed to delete posts'
-    }))
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
   })
 
   it('should handle database errors', async () => {
-    expect.assertions(4)
+    const userId = '123'
+    const name = 'Leroy'
+    const token = { _id: userId, username: name }
     User.deleteUser = jest.fn().mockRejectedValue(new Error('boom'))
-    await deleteProfile(req, res, next)
-    expect(res.status).not.toHaveBeenCalled()
-    expect(res.json).not.toHaveBeenCalled()
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(next).toHaveBeenCalledWith(expect.objectContaining({
-      message: 'boom'
-    }))
+    await expect(deleteProfile({ userId, token })).rejects
+      .toThrow(/boom/)
   })
 })

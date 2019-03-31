@@ -1,7 +1,7 @@
 'use strict'
 
-function findPosts ({ query }) {
-  return this.find(query)
+function findPosts ({ filter }) {
+  return this.find(filter)
     .populate('author', 'username name avatarUrl time_zone languages gender')
     .exec()
 }

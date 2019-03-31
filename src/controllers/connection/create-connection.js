@@ -1,32 +1,30 @@
 'use strict'
 
 const Connection = require('../../models/connection')
+const { errorWithStatus } = require('../../utils')
 
-// CREATE CONNECTION
-//   Example: POST >> /api/connect
-//   Secured: yes, valid JWT required
-//   Expects:
-//     1) request body properties : {
-//          mentor          : id
-//          mentee          : id
-//          mentorName      : string
-//          menteeName      : string
-//          initiator       : id
-//          status          : 'pending'
-//          conversationID  : string
-//        }
-//   Returns: success message & connection _id on success
-exports = module.exports = async function createConnection (req, res, next) {
-  const conn = new Connection(req.body)
+/**
+ * Create a connection
+ * Secured - valid JWT required
+ * request body properties : {
+ *   {String}  mentor (id)
+ *   {String}  mentee (id)
+ *   {String}  mentorName
+ *   {String}  menteeName
+ *   {String}  initiator (id) @TODO should get from user's req.token._id
+ *   {String}  status ('pending')
+ *   {String}  conversationID
+ * @returns  {Object}  Success message & connection _id
+ */
+exports = module.exports = async function createConnection ({ body }) {
+  if (!body) throw errorWithStatus(new Error('Missing required body'), 400)
+
+  const conn = new Connection(body)
   conn.dateStarted = Date.now()
 
-  try {
-    const savedConn = await conn.save()
-    return res.status(200).json({
-      message: 'Connection created',
-      connectionId: savedConn._id
-    })
-  } catch (err) {
-    return next(err)
+  const savedConn = await conn.save()
+  return {
+    message: 'Connection created',
+    connectionId: savedConn._id
   }
 }
