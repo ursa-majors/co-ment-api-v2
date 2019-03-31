@@ -26,6 +26,19 @@ describe('incrementViews', () => {
     })
   })
 
+  it('should return unsuccess message on no update', async () => {
+    expect.assertions(3)
+
+    Post.incrementViews = jest.fn().mockResolvedValue(null)
+
+    const actual = await incrementViews({ postId, userId })
+    expect(actual).toEqual({ message: 'Post not updated' })
+    expect(Post.incrementViews).toHaveBeenCalledTimes(1)
+    expect(Post.incrementViews).toHaveBeenCalledWith({
+      target: { _id: postId, author: { $ne: userId } }
+    })
+  })
+
   it('should handle errors thrown from DB calls', async () => {
     expect.assertions(2)
 

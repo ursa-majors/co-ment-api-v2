@@ -27,9 +27,9 @@ exports = module.exports = async function sendEmail ({ username, userId, body })
   }
 
   // find the sender & recipient
-  const [sender, recipient] = Promise.all([
-    await User.findById(userId).exec(),
-    await User.findOne({ username: body.recipient }).exec()
+  const [sender, recipient] = await Promise.all([
+    User.findById(userId).exec(),
+    User.findOne({ username: body.recipient }).exec()
   ])
 
   if (!recipient) throw errorWithStatus(new Error('Recipient user not found!'), 404)

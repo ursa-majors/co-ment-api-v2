@@ -43,6 +43,36 @@ describe('deletePost', () => {
     expect(Post.deletePost).toHaveBeenCalledTimes(1)
   })
 
+  it('should throw with 400 status is missing postId', async () => {
+    expect.assertions(3)
+
+    const populate = jest.fn().mockResolvedValue({})
+    Post.deletePost = jest.fn().mockResolvedValue({ populate })
+
+    await expect(deletePost({ userId })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: expect.stringContaining('Missing required postId')
+      }))
+    expect(Post.deletePost).not.toHaveBeenCalled()
+    expect(populate).not.toHaveBeenCalled()
+  })
+
+  it('should throw with 400 status is missing userId', async () => {
+    expect.assertions(3)
+
+    const populate = jest.fn().mockResolvedValue({})
+    Post.deletePost = jest.fn().mockResolvedValue({ populate })
+
+    await expect(deletePost({ postId })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: expect.stringContaining('Missing required userId')
+      }))
+    expect(Post.deletePost).not.toHaveBeenCalled()
+    expect(populate).not.toHaveBeenCalled()
+  })
+
   it('should handle errors thrown from DB calls', async () => {
     expect.assertions(2)
 

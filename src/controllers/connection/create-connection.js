@@ -16,7 +16,7 @@ const { errorWithStatus } = require('../../utils')
  *   {String}  conversationID
  * @returns  {Object}  Success message & connection _id
  */
-exports = module.exports = async function createConnection ({ body }) {
+exports = module.exports = async function createConnection ({ body } = {}) {
   if (!body) throw errorWithStatus(new Error('Missing required body'), 400)
 
   const conn = new Connection(body)

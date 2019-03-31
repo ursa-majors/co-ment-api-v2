@@ -126,6 +126,53 @@ describe('updatePostLikes', () => {
     expect(User.findById).toHaveBeenCalledTimes(1)
   })
 
+  it('should throw with 400 status when missing postId', async () => {
+    expect.assertions(3)
+    const action = minusMinus
+
+    User.exec = jest.fn()
+    Post.exec = jest.fn()
+
+    await expect(updatePostLikes({ userId, action })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Missing required postId'
+      }))
+    expect(User.exec).not.toHaveBeenCalled()
+    expect(Post.exec).not.toHaveBeenCalled()
+  })
+
+  it('should throw with 400 status when missing userId', async () => {
+    expect.assertions(3)
+    const action = minusMinus
+
+    User.exec = jest.fn()
+    Post.exec = jest.fn()
+
+    await expect(updatePostLikes({ postId, action })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Missing required userId'
+      }))
+    expect(User.exec).not.toHaveBeenCalled()
+    expect(Post.exec).not.toHaveBeenCalled()
+  })
+
+  it('should throw with 400 status when missing action', async () => {
+    expect.assertions(3)
+
+    User.exec = jest.fn()
+    Post.exec = jest.fn()
+
+    await expect(updatePostLikes({ postId, userId })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Missing required action'
+      }))
+    expect(User.exec).not.toHaveBeenCalled()
+    expect(Post.exec).not.toHaveBeenCalled()
+  })
+
   it('should handle errors thrown from Post DB method calls', async () => {
     expect.assertions(3)
     const action = minusMinus

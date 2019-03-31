@@ -84,6 +84,38 @@ describe('updatePost', () => {
     })
   })
 
+  it('should throw with 400 status when missing postId', async () => {
+    expect.assertions(1)
+    const body = { title: 'Updated Title' }
+
+    await expect(updatePost({ userId, body })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Missing required postId'
+      }))
+  })
+
+  it('should throw with 400 status when missing userId', async () => {
+    expect.assertions(1)
+    const body = { title: 'Updated Title' }
+
+    await expect(updatePost({ postId, body })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Missing required userId'
+      }))
+  })
+
+  it('should throw with 400 status when missing body', async () => {
+    expect.assertions(1)
+
+    await expect(updatePost({ postId, userId })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: 'Missing required body'
+      }))
+  })
+
   it('should handle errors thrown from Post DB method calls', async () => {
     expect.assertions(2)
     const body = { title: 'Updated Title' }

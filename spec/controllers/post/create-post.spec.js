@@ -41,7 +41,6 @@ describe('createPost', () => {
     const userId = id
     const body = { title, role }
 
-    // mock Post model result
     Post.exec = jest.fn().mockResolvedValue({ title, role })
 
     await expect(createPost({ userId, body })).rejects
@@ -51,6 +50,42 @@ describe('createPost', () => {
       }))
     expect(Post.findOne).toHaveBeenCalledTimes(1)
     expect(Post.exec).toHaveBeenCalledTimes(1)
+    expect(Post.prototype.save).not.toHaveBeenCalled()
+    expect(Post.prototype.populate).not.toHaveBeenCalled()
+  })
+
+  it('should throw with 400 status is missing title', async () => {
+    expect.assertions(5)
+    const userId = id
+    const body = { role }
+
+    Post.exec = jest.fn().mockResolvedValue({ title, role })
+
+    await expect(createPost({ userId, body })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: expect.stringContaining('Missing required title')
+      }))
+    expect(Post.findOne).not.toHaveBeenCalled()
+    expect(Post.exec).not.toHaveBeenCalled()
+    expect(Post.prototype.save).not.toHaveBeenCalled()
+    expect(Post.prototype.populate).not.toHaveBeenCalled()
+  })
+
+  it('should throw with 400 status is missing role', async () => {
+    expect.assertions(5)
+    const userId = id
+    const body = { title }
+
+    Post.exec = jest.fn().mockResolvedValue({ title, role })
+
+    await expect(createPost({ userId, body })).rejects
+      .toThrow(expect.objectContaining({
+        status: 400,
+        message: expect.stringContaining('Missing required role')
+      }))
+    expect(Post.findOne).not.toHaveBeenCalled()
+    expect(Post.exec).not.toHaveBeenCalled()
     expect(Post.prototype.save).not.toHaveBeenCalled()
     expect(Post.prototype.populate).not.toHaveBeenCalled()
   })
