@@ -30,20 +30,21 @@ exports = module.exports = async function createMessage ({ userId, body, log }) 
 
   await message.save()
   // call utility to check for and send unreads waiting email
-  const didEmail = duckDuckSpam(message.recipient)
+  const didEmail = await duckDuckSpam(log, message.recipient)
   log.info(`${didEmail ? 'Did' : 'Did not'} email ${message.recipient}`)
 
-  return { message: message }
+  return { message }
 }
 
 // helpers
 
 /**
  * Dispatch reminder email if user's alreadyContacted = false
+ * @param    {Object}   log        Logger
  * @param    {String}   recipient  recipient's user _id
  * @returns  {Boolean}             True if recipient was emailed
  */
-async function duckDuckSpam (recipient) {
+async function duckDuckSpam (log, recipient) {
   const projection = {
     username: 1,
     email: 1,
@@ -54,7 +55,8 @@ async function duckDuckSpam (recipient) {
     const user = await User.findById(recipient, projection).exec()
     if (!user || user.contactMeta.alreadyContacted) return false
 
-    sendReminderEmail({ to_name: user.username, to_email: user.email })
+    log.info(`emailing: ${user.email} unread messages reminder.`)
+    await sendReminderEmail({ to_name: user.username, to_email: user.email })
 
     // update user's `contactMeta.alreadyContacted` field
     user.contactMeta.alreadyContacted = true
@@ -73,11 +75,5 @@ function sendReminderEmail (params) {
     text: unreadsReminder(url, params.to_name)
   }
 
-  // send mail using `mailer` util
-  try {
-    mailer(params.to_email, subject, body)
-    console.log(`emailing: ${params.to_email} unread messages reminder.`)
-  } catch (err) {
-    throw err
-  }
+  return mailer(params.to_email, subject, body)
 }
