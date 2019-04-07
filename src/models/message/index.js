@@ -1,7 +1,6 @@
 'use strict'
 
 const mongoose = require('mongoose')
-const { statics } = require('./plugins')
 
 const messageSchema = new mongoose.Schema({
   conversation: {
@@ -36,9 +35,21 @@ const messageSchema = new mongoose.Schema({
   timestamps: true
 })
 
-// plug in static class methods
+/* ================================ METHODS ================================ */
 
-messageSchema.plugin(statics.findByConversationAndRead)
+/**
+* Finds all messages for a conversation, toggling unread field to false
+* @param    {String}  conversationId  Target conversation ID
+* @returns  {Array}                   Of updated conversation objects
+*/
+messageSchema.statics.findByConversationAndRead = function findByConversationAndRead ({ conversationId }) {
+  if (!conversationId) throw new Error('Missing required conversationId')
+
+  const updates = { '$set': { 'unread': false } }
+  const options = { new: true }
+
+  return this.update({ conversationId }, updates, options).exec()
+}
 
 /* ================================ EXPORT ================================= */
 

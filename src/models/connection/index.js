@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const { statics } = require('./plugins')
+const getStatusFromType = require('./get-status-from-type')
 
 /* ================================ SCHEMA ================================= */
 
@@ -34,10 +34,23 @@ const connectionSchema = new mongoose.Schema({
   }
 })
 
-// plug in static class methods
+/* ================================ METHODS ================================ */
 
-connectionSchema.plugin(statics.findOwnConnections)
-connectionSchema.plugin(statics.updateConnectionStatus)
+connectionSchema.statics.findOwnConnections = function findOwnConnections ({ target }) {
+  if (!target) throw new Error('Missing required target param')
+
+  const filter = { $or: [{ 'mentor.id': target }, { 'mentee.id': target }] }
+  return this.find(filter).exec()
+}
+
+connectionSchema.statics.updateConnectionStatus = function updateConnectionStatus ({ target, type }) {
+  if (!target) throw new Error('Missing required target')
+  if (!type) throw new Error('Missing required type')
+
+  const status = getStatusFromType(type)
+  const options = { new: true } // return updated document
+  return this.findOneAndUpdate(target, status, options).exec()
+}
 
 /* ================================ EXPORT ================================= */
 

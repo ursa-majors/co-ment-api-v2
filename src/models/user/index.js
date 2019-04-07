@@ -1,7 +1,9 @@
 'use strict'
 
 const mongoose = require('mongoose')
-const { statics, methods } = require('./plugins')
+const crypto = require('crypto')
+const jwt = require('jsonwebtoken')
+const jwtSecret = process.env.JWT_SECRET
 
 const userSchema = new mongoose.Schema({
   username: { type: String, unique: true },
@@ -42,18 +44,45 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 })
 
-// plug in instance methods
+/* ================================ METHODS ================================ */
 
-userSchema.plugin(methods.hashPassword)
-userSchema.plugin(methods.validatePassword)
-userSchema.plugin(methods.generateJwt)
+userSchema.methods.hashPassword = function hashPassword (pwd) {
+  this.salt = crypto.randomBytes(16).toString('hex')
+  this.hash = crypto.pbkdf2Sync(pwd, this.salt, 10000, 512, 'sha512').toString('hex')
+}
 
-// plug in static class methods
+// hash and compare submitted passwords to stored hashes in db.
+// return 'true' if match
+userSchema.methods.validatePassword = function validatePassword (pwd) {
+  const hash = crypto.pbkdf2Sync(pwd, this.salt, 10000, 512, 'sha512').toString('hex')
+  return this.hash === hash
+}
 
-userSchema.plugin(statics.findAllUsers)
-userSchema.plugin(statics.updateUser)
-userSchema.plugin(statics.deleteUser)
+// Generate and return signed JWT based on 'this' user object
+userSchema.methods.generateJwt = function generateJWT () {
+  const payload = {
+    _id: this._id,
+    username: this.username,
+    validated: this.validated
+  }
+  const options = {
+    expiresIn: '7d'
+  }
 
-// exports
+  return jwt.sign(payload, jwtSecret, options)
+}
+
+userSchema.statics.updateUser = function updateUser ({ target, updates, options = {} }) {
+  if (target == null) throw new Error('Missing required target param')
+  if (updates == null) throw new Error('Missing required updates param')
+  return this.findOneAndUpdate(target, updates, options).exec()
+}
+
+userSchema.statics.deleteUser = function deleteUser (target) {
+  if (target == null) throw new Error('Missing required target param')
+  return this.findOneAndRemove(target).exec()
+}
+
+/* ================================ EXPORT ================================= */
 
 exports = module.exports = mongoose.model('User', userSchema)

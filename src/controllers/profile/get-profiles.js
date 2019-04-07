@@ -9,6 +9,6 @@ const User = require('../../models/user')
  */
 exports = module.exports = async function getProfiles () {
   const projection = { signupKey: 0, passwordResetKey: 0, hash: 0, salt: 0 }
-  const profiles = await User.findAllUsers({ projection })
+  const profiles = await User.find({}, projection).exec()
   return profiles
 }

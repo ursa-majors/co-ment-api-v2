@@ -8,16 +8,17 @@ jest.mock('../../../src/models/user')
 describe('getProfiles', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    User.find = jest.fn(() => User)
   })
 
   it('should return an array of user profiles', async () => {
-    User.findAllUsers = jest.fn().mockResolvedValue(expect.any(Array))
+    User.exec = jest.fn().mockResolvedValue(expect.any(Array))
     const actual = await getProfiles()
     expect(actual).toEqual(expect.any(Array))
   })
 
   it('should handle database errors', async () => {
-    User.findAllUsers = jest.fn().mockRejectedValue(new Error('boom'))
+    User.exec = jest.fn().mockRejectedValue(new Error('boom'))
     await expect(getProfiles()).rejects
       .toThrow(/boom/)
   })
