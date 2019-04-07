@@ -10,7 +10,7 @@ describe('verifyAuth middleware', () => {
   it('should validate jwt and set req.token', (done) => {
     const secret = 'shhhhhh'
     process.env.JWT_SECRET = secret
-    const token = jwt.sign({ _id: 'foo', name: 'bar' }, secret)
+    const token = jwt.sign({ _id: 'foo', username: 'bar' }, secret)
 
     const verifyAuth = require('../../src/middleware/verify-auth')
     req.headers = {
@@ -20,7 +20,7 @@ describe('verifyAuth middleware', () => {
     verifyAuth(req, res, function next () {
       expect(req.token).toEqual({
         _id: 'foo',
-        name: 'bar',
+        username: 'bar',
         iat: expect.any(Number)
       })
       done()

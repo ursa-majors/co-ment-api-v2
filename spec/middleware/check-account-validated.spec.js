@@ -24,16 +24,17 @@ describe('checkAccountValidated middleware', () => {
     expect(res.json).not.toHaveBeenCalled()
   })
 
-  it('should respond with error message if user account not validated', () => {
-    expect.assertions(6)
+  it('should call next with error if user account not validated', () => {
+    expect.assertions(4)
     req.token.validated = false
     checkAccountValidated(req, res, next)
 
-    expect(next).not.toHaveBeenCalled()
-    expect(req.log.error).toHaveBeenCalledTimes(1)
-    expect(res.status).toHaveBeenCalledTimes(1)
-    expect(res.status).toHaveBeenCalledWith(403)
-    expect(res.json).toHaveBeenCalledTimes(1)
-    expect(res.json).toHaveBeenCalledWith({ message: expect.any(String) })
+    expect(next).toHaveBeenCalledTimes(1)
+    expect(next).toHaveBeenCalledWith(expect.objectContaining({
+      status: 403,
+      message: expect.stringMatching(/You need to validate your account/)
+    }))
+    expect(res.status).not.toHaveBeenCalled()
+    expect(res.json).not.toHaveBeenCalled()
   })
 })

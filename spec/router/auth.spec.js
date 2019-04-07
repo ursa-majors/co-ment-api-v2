@@ -30,7 +30,7 @@ beforeEach(() => {
 
 describe('GET >> /refreshtoken', () => {
   it('should respond with 200 status on success', async () => {
-    const token = jwt.sign({ _id: 'foo', name: 'bar' }, secret)
+    const token = jwt.sign({ _id: 'foo', username: 'bar' }, secret)
 
     const response = await request(server)
       .get('/api/v2/auth/refreshtoken')
@@ -59,7 +59,7 @@ describe('GET >> /refreshtoken', () => {
   })
 
   it('should handle errors thrown from controller', async () => {
-    const token = jwt.sign({ _id: 'foo', name: 'bar' }, secret)
+    const token = jwt.sign({ _id: 'foo', username: 'bar' }, secret)
     refreshToken.mockRejectedValue(new Error('kaboom'))
     const response = await request(server)
       .get('/api/v2/auth/refreshtoken')
@@ -98,7 +98,7 @@ describe('POST >> /register', () => {
   })
 })
 
-describe('POST >> /login', () => {
+describe('POST >> auth/login', () => {
   const username = 'username'
   const password = 'password'
 

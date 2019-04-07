@@ -2,7 +2,7 @@
 
 exports = module.exports = Object.freeze({
   requestMiddleware: require('./request'),
-  loggerMiddleware: require('./logger'),
+  loggerMiddleware: require('./logger').makeLoggerMiddleware,
   errorMiddleware: require('./error-handler'),
   checkValidated: require('./check-account-validated'),
   corsMiddleware: require('./cors'),

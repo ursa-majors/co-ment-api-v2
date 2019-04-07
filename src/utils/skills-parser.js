@@ -25,15 +25,12 @@ const dictionary = _flattenDictionary(skillsDictionary)
 
 /**
  * return a standard skill if it exists, otherwise return the argument
- * @param    {String}  request  skill name
- * @returns  {String}           standard or original skill
+ * @param    {String}  requestedSkill  skill name
+ * @returns  {String}                  standard or original skill
  */
-function parseSkill (request) {
-  let matchSkill = request
-  if (dictionary.hasOwnProperty(request.toLowerCase())) {
-    matchSkill = dictionary[request.toLowerCase()]
-  }
-  return matchSkill
+function parseSkill (requestedSkill) {
+  const found = dictionary[requestedSkill.toLowerCase()]
+  return found || requestedSkill
 }
 
 // exports

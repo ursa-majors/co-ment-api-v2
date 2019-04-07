@@ -4,6 +4,6 @@ exports = module.exports = Object.freeze({
   errorWithStatus: require('./error-with-status'),
   findObjProperty: require('./find-obj-property'),
   maskAuthHeader: require('./mask-auth-header'),
-  parseSkill: require('./skillsparser'),
+  parseSkill: require('./skills-parser'),
   populateMessages: require('./populate-messages')
 })

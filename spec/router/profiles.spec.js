@@ -5,27 +5,28 @@ process.env.JWT_SECRET = secret
 const request = require('supertest')
 const jwt = require('jsonwebtoken')
 const {
-  getConnections,
-  createConnection,
-  updateConnection
-} = require('../../src/controllers/connection')
+  getOneProfile,
+  updateProfile,
+  deleteProfile,
+  getProfiles
+} = require('../../src/controllers/profile')
 const server = require('../../src/server')
+const userId = 'foo'
 
 jest.mock('../../src/middleware/request', () => jest.fn(() => (req, res, next) => next()))
 jest.mock('../../src/middleware/error-handler', () => jest.fn(() => (req, res, next) => next()))
-jest.mock('../../src/controllers/connection', () => ({
-  getConnections: jest.fn().mockResolvedValue(true),
-  createConnection: jest.fn().mockResolvedValue(true),
-  updateConnection: jest.fn().mockResolvedValue(true)
+jest.mock('../../src/controllers/profile', () => ({
+  getOneProfile: jest.fn().mockResolvedValue(true),
+  updateProfile: jest.fn().mockResolvedValue(true),
+  deleteProfile: jest.fn().mockResolvedValue(true),
+  getProfiles: jest.fn().mockResolvedValue(true)
 }))
 
 beforeEach(() => {
   jest.clearAllMocks()
 })
 
-describe('GET >> /connections', () => {
-  const userId = 'foo'
-
+describe('GET >> /profiles', () => {
   beforeEach(() => {
     jest.clearAllMocks()
   })
@@ -34,17 +35,17 @@ describe('GET >> /connections', () => {
     const token = jwt.sign({ _id: userId, username: 'bar', validated: true }, secret)
 
     const response = await request(server)
-      .get('/api/v2/connections')
+      .get(`/api/v2/profiles/${userId}`)
       .set('Authorization', `Bearer ${token}`)
     expect(response.statusCode).toEqual(200)
     expect(response.body).toEqual(true)
-    expect(getConnections).toHaveBeenCalledTimes(1)
-    expect(getConnections).toHaveBeenCalledWith({ userId: expect.any(String) })
+    expect(getOneProfile).toHaveBeenCalledTimes(1)
+    expect(getOneProfile).toHaveBeenCalledWith({ userId: expect.any(String) })
   })
 
   it('should respond with 401 error if request includes invalid JWT', async () => {
     const response = await request(server)
-      .get('/api/v2/connections')
+      .get(`/api/v2/profiles/${userId}`)
       .set('Authorization', `Bearer invalid`)
     expect(response.statusCode).toEqual(401)
     expect(response.error.text).toEqual(expect.stringMatching(/jwt malformed/))
@@ -52,118 +53,45 @@ describe('GET >> /connections', () => {
 
   it('should respond with 401 error if request is missing JWT', async () => {
     const response = await request(server)
-      .get('/api/v2/connections')
+      .get(`/api/v2/profiles/${userId}`)
     expect(response.statusCode).toEqual(401)
     expect(response.error.text).toEqual(expect.stringMatching(/No authorization token was found/))
   })
 
-  it('should respond with 403 error if user not validated', async () => {
-    const token = jwt.sign({ _id: userId, username: 'bar', validated: false }, secret)
-
-    const response = await request(server)
-      .get('/api/v2/connections')
-      .set('Authorization', `Bearer ${token}`)
-    expect(response.statusCode).toEqual(403)
-    expect(response.error.text).toEqual(expect.stringMatching(/need to validate/))
-  })
-
   it('should handle errors thrown from controller', async () => {
-    const token = jwt.sign({ _id: userId, username: 'bar', validated: true }, secret)
-    getConnections.mockRejectedValue(new Error('kaboom'))
+    const token = jwt.sign({ _id: userId, username: 'bar' }, secret)
+    getOneProfile.mockRejectedValue(new Error('kaboom'))
 
     const response = await request(server)
-      .get('/api/v2/connections')
+      .get(`/api/v2/profiles/${userId}`)
       .set('Authorization', `Bearer ${token}`)
     expect(response.statusCode).toEqual(500)
     expect(response.error.text).toEqual(expect.stringMatching(/kaboom/))
   })
 })
 
-describe('POST >> /connections', () => {
-  const userId = 'foo'
-
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
+describe('PUT >> /profiles/:id', () => {
   it('should respond with 200 status on success', async () => {
     const token = jwt.sign({ _id: userId, username: 'bar', validated: true }, secret)
 
     const response = await request(server)
-      .post('/api/v2/connections')
-      .send({ body: {} })
+      .put(`/api/v2/profiles/${userId}`)
+      .send({})
       .set('Authorization', `Bearer ${token}`)
     expect(response.statusCode).toEqual(200)
     expect(response.body).toEqual(true)
-    expect(createConnection).toHaveBeenCalledTimes(1)
-    expect(createConnection).toHaveBeenCalledWith({ body: expect.any(Object) })
-  })
-
-  it('should respond with 401 error if request includes invalid JWT', async () => {
-    const response = await request(server)
-      .post('/api/v2/connections')
-      .set('Authorization', `Bearer invalid`)
-    expect(response.statusCode).toEqual(401)
-    expect(response.error.text).toEqual(expect.stringMatching(/jwt malformed/))
-  })
-
-  it('should respond with 401 error if request is missing JWT', async () => {
-    const response = await request(server)
-      .post('/api/v2/connections')
-    expect(response.statusCode).toEqual(401)
-    expect(response.error.text).toEqual(expect.stringMatching(/No authorization token was found/))
-  })
-
-  it('should respond with 403 error if user not validated', async () => {
-    const token = jwt.sign({ _id: userId, username: 'bar', validated: false }, secret)
-
-    const response = await request(server)
-      .post('/api/v2/connections')
-      .send({ userId })
-      .set('Authorization', `Bearer ${token}`)
-    expect(response.statusCode).toEqual(403)
-    expect(response.error.text).toEqual(expect.stringMatching(/need to validate/))
-  })
-
-  it('should handle errors thrown from controller', async () => {
-    const token = jwt.sign({ _id: userId, username: 'bar', validated: true }, secret)
-    createConnection.mockRejectedValue(new Error('kaboom'))
-
-    const response = await request(server)
-      .post('/api/v2/connections')
-      .send({ userId })
-      .set('Authorization', `Bearer ${token}`)
-    expect(response.statusCode).toEqual(500)
-    expect(response.error.text).toEqual(expect.stringMatching(/kaboom/))
-  })
-})
-
-describe('PUT >> /connections/:id', () => {
-  const userId = 'foo'
-
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it('should respond with 200 status on success', async () => {
-    const token = jwt.sign({ _id: userId, username: 'bar', validated: true }, secret)
-
-    const response = await request(server)
-      .put('/api/v2/connections/1')
-      .send({ type: 'type' })
-      .set('Authorization', `Bearer ${token}`)
-    expect(response.statusCode).toEqual(200)
-    expect(response.body).toEqual(true)
-    expect(updateConnection).toHaveBeenCalledTimes(1)
-    expect(updateConnection).toHaveBeenCalledWith({
-      connId: expect.any(String),
-      type: expect.any(String)
+    expect(updateProfile).toHaveBeenCalledTimes(1)
+    expect(updateProfile).toHaveBeenCalledWith({
+      userId,
+      token: expect.any(Object),
+      body: expect.any(Object)
     })
   })
 
   it('should respond with 401 error if request includes invalid JWT', async () => {
     const response = await request(server)
-      .put('/api/v2/connections/1')
+      .put(`/api/v2/profiles/${userId}`)
+      .send({})
       .set('Authorization', `Bearer invalid`)
     expect(response.statusCode).toEqual(401)
     expect(response.error.text).toEqual(expect.stringMatching(/jwt malformed/))
@@ -171,7 +99,91 @@ describe('PUT >> /connections/:id', () => {
 
   it('should respond with 401 error if request is missing JWT', async () => {
     const response = await request(server)
-      .put('/api/v2/connections/1')
+      .put(`/api/v2/profiles/${userId}`)
+      .send({})
+    expect(response.statusCode).toEqual(401)
+    expect(response.error.text).toEqual(expect.stringMatching(/No authorization token was found/))
+  })
+
+  it('should handle errors thrown from controller', async () => {
+    const token = jwt.sign({ _id: userId, username: 'bar', validated: true }, secret)
+    updateProfile.mockRejectedValue(new Error('kaboom'))
+
+    const response = await request(server)
+      .put(`/api/v2/profiles/${userId}`)
+      .send({})
+      .set('Authorization', `Bearer ${token}`)
+    expect(response.statusCode).toEqual(500)
+    expect(response.error.text).toEqual(expect.stringMatching(/kaboom/))
+  })
+})
+
+describe('DELETE >> /profiles/:id', () => {
+  it('should respond with 200 status on success', async () => {
+    const token = jwt.sign({ _id: userId, username: 'bar' }, secret)
+
+    const response = await request(server)
+      .delete(`/api/v2/profiles/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(response.statusCode).toEqual(200)
+    expect(response.body).toEqual(true)
+    expect(deleteProfile).toHaveBeenCalledTimes(1)
+    expect(deleteProfile).toHaveBeenCalledWith({
+      token: expect.any(Object),
+      userId
+    })
+  })
+
+  it('should respond with 401 error if request includes invalid JWT', async () => {
+    const response = await request(server)
+      .delete(`/api/v2/profiles/${userId}`)
+      .set('Authorization', `Bearer invalid`)
+    expect(response.statusCode).toEqual(401)
+    expect(response.error.text).toEqual(expect.stringMatching(/jwt malformed/))
+  })
+
+  it('should respond with 401 error if request is missing JWT', async () => {
+    const response = await request(server)
+      .delete(`/api/v2/profiles/${userId}`)
+    expect(response.statusCode).toEqual(401)
+    expect(response.error.text).toEqual(expect.stringMatching(/No authorization token was found/))
+  })
+
+  it('should handle errors thrown from controller', async () => {
+    const token = jwt.sign({ _id: userId, username: 'bar' }, secret)
+    deleteProfile.mockRejectedValue(new Error('kaboom'))
+
+    const response = await request(server)
+      .delete(`/api/v2/profiles/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(response.statusCode).toEqual(500)
+    expect(response.error.text).toEqual(expect.stringMatching(/kaboom/))
+  })
+})
+
+describe('GET >> /profilesd', () => {
+  it('should respond with 200 status on success', async () => {
+    const token = jwt.sign({ _id: userId, username: 'bar', validated: true }, secret)
+
+    const response = await request(server)
+      .get(`/api/v2/profiles`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(response.statusCode).toEqual(200)
+    expect(response.body).toEqual(true)
+    expect(getProfiles).toHaveBeenCalledTimes(1)
+  })
+
+  it('should respond with 401 error if request includes invalid JWT', async () => {
+    const response = await request(server)
+      .get(`/api/v2/profiles`)
+      .set('Authorization', `Bearer invalid`)
+    expect(response.statusCode).toEqual(401)
+    expect(response.error.text).toEqual(expect.stringMatching(/jwt malformed/))
+  })
+
+  it('should respond with 401 error if request is missing JWT', async () => {
+    const response = await request(server)
+      .get(`/api/v2/profiles`)
     expect(response.statusCode).toEqual(401)
     expect(response.error.text).toEqual(expect.stringMatching(/No authorization token was found/))
   })
@@ -180,8 +192,7 @@ describe('PUT >> /connections/:id', () => {
     const token = jwt.sign({ _id: userId, username: 'bar', validated: false }, secret)
 
     const response = await request(server)
-      .put('/api/v2/connections/1')
-      .send({ userId })
+      .get(`/api/v2/profiles`)
       .set('Authorization', `Bearer ${token}`)
     expect(response.statusCode).toEqual(403)
     expect(response.error.text).toEqual(expect.stringMatching(/need to validate/))
@@ -189,11 +200,10 @@ describe('PUT >> /connections/:id', () => {
 
   it('should handle errors thrown from controller', async () => {
     const token = jwt.sign({ _id: userId, username: 'bar', validated: true }, secret)
-    updateConnection.mockRejectedValue(new Error('kaboom'))
+    getProfiles.mockRejectedValue(new Error('kaboom'))
 
     const response = await request(server)
-      .put('/api/v2/connections/1')
-      .send({ userId })
+      .get(`/api/v2/profiles`)
       .set('Authorization', `Bearer ${token}`)
     expect(response.statusCode).toEqual(500)
     expect(response.error.text).toEqual(expect.stringMatching(/kaboom/))
