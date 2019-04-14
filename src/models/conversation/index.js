@@ -26,7 +26,7 @@ const conversationSchema = new mongoose.Schema({
 /* ================================ METHODS ================================ */
 
 conversationSchema.methods.populateMessages = async function populateMessages () {
-  // get all messages for a conversation, updating their 'unread' status = false
+  // get all messages for a conversation. Updates 'unread' status to false
   const messages = await Message.findByConversationAndRead({ conversationId: this._id })
 
   return {

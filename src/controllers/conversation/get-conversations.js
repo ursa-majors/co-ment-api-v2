@@ -2,10 +2,10 @@
 
 const Conversation = require('../../models/conversation')
 const User = require('../../models/user')
-const { populateMessages, errorWithStatus } = require('../../utils')
+const { errorWithStatus } = require('../../utils')
 
 /**
- * Get all user's conversations with messages & metadata
+ * Get all user's conversations with participants, messages & metadata
  * Secured - valid JWT required
  * @returns  {Array}  Of user's conversations with most recent messages
  */
@@ -13,10 +13,10 @@ exports = module.exports = async function getConversations ({ userId }) {
   if (!userId) throw errorWithStatus(new Error('Missing required userId'), 400)
 
   const conversations = await Conversation.findAllWithParticipants({ userId })
-    .then(convos => convos.map(conv => populateMessages(conv._id)))
+    .then(convos => Promise.all(convos.map(conv => conv.populateMessages())))
     .then(addConversationMetadata(userId))
 
-  // set user's alreadyContacted flag to false so they rec
+  // set user's alreadyContacted flag to false so they receive
   // reminders of new messages
   const updates = { $set: { 'contactMeta.alreadyContacted': false } }
   await User.findByIdAndUpdate(userId, updates).exec()

@@ -42,13 +42,13 @@ const messageSchema = new mongoose.Schema({
 * @param    {String}  conversationId  Target conversation ID
 * @returns  {Array}                   Of updated conversation objects
 */
-messageSchema.statics.findByConversationAndRead = function findByConversationAndRead ({ conversationId }) {
+messageSchema.statics.findByConversationAndRead = async function findByConversationAndRead ({ conversationId }) {
   if (!conversationId) throw new Error('Missing required conversationId')
 
   const updates = { '$set': { 'unread': false } }
-  const options = { new: true }
 
-  return this.update({ conversationId }, updates, options).exec()
+  await this.updateMany({ conversation: conversationId }, updates).exec()
+  return this.find({ conversation: conversationId }).exec()
 }
 
 /* ================================ EXPORT ================================= */

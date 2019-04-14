@@ -59,7 +59,7 @@ userSchema.methods.validatePassword = function validatePassword (pwd) {
 }
 
 // Generate and return signed JWT based on 'this' user object
-userSchema.methods.generateJwt = function generateJWT () {
+userSchema.methods.generateJWT = function generateJWT () {
   const payload = {
     _id: this._id,
     username: this.username,

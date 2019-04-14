@@ -14,17 +14,9 @@ const { errorWithStatus } = require('../../utils')
  * @returns  {Object}  success message & conversation object
  */
 exports = module.exports = async function createConversation ({ userId, body }) {
-  if (!body.recipientId) {
-    throw errorWithStatus(new Error('Missing recipient ID.'), 400)
-  }
-
-  if (!body.message) {
-    throw errorWithStatus(new Error('Missing message.'), 400)
-  }
-
-  if (!body.subject) {
-    throw errorWithStatus(new Error('Missing subject.'), 400)
-  }
+  if (body.recipientId == null) throw errorWithStatus(new Error('Missing recipient ID.'), 400)
+  if (body.message == null) throw errorWithStatus(new Error('Missing message.'), 400)
+  if (body.subject == null) throw errorWithStatus(new Error('Missing subject.'), 400)
 
   const conversation = new Conversation({
     subject: body.subject,

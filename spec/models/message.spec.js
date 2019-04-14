@@ -85,7 +85,8 @@ describe(`Message model`, () => {
 
 describe(`Message model static methods`, () => {
   beforeAll(() => {
-    Message.update = jest.fn(() => Message)
+    Message.updateMany = jest.fn(() => Message)
+    Message.find = jest.fn(() => Message)
   })
 
   beforeEach(() => {
@@ -94,20 +95,26 @@ describe(`Message model static methods`, () => {
 
   describe(`.findByConversationAndRead()`, () => {
     it(`should return an array of messages setting 'unread' to false`, async () => {
+      expect.assertions(5)
       const conversationId = '111f111e111c11111de860ea'
-      Message.exec = jest.fn().mockResolvedValue(expect.any(Array))
+      Message.exec = jest.fn()
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce(expect.any(Array))
       const actual = await Message.findByConversationAndRead({ conversationId })
       expect(actual).toEqual(expect.any(Array))
-      expect(Message.update).toHaveBeenCalledTimes(1)
-      expect(Message.update).toHaveBeenCalledWith(
-        { conversationId },
-        { '$set': { 'unread': false } },
-        { new: true }
+      expect(Message.updateMany).toHaveBeenCalledTimes(1)
+      expect(Message.updateMany).toHaveBeenCalledWith(
+        { conversation: conversationId },
+        { '$set': { 'unread': false } }
+      )
+      expect(Message.find).toHaveBeenCalledTimes(1)
+      expect(Message.find).toHaveBeenCalledWith(
+        { conversation: conversationId }
       )
     })
 
-    it(`should throw if missing required 'conversationId' param`, () => {
-      expect(() => Message.findByConversationAndRead({}))
+    it(`should throw if missing required 'conversationId' param`, async () => {
+      await expect(Message.findByConversationAndRead({})).rejects
         .toThrow(/Missing required conversationId/)
     })
   })

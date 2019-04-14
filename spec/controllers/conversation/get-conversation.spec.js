@@ -4,7 +4,6 @@ const Conversation = require('../../../src/models/conversation')
 const getConversation = require('../../../src/controllers/conversation/get-conversation')
 
 jest.mock('../../../src/models/conversation', () => jest.fn())
-jest.mock('../../../src/utils/populate-messages', () => jest.fn((val) => val))
 
 const conversationId = '09asdlkj232345lkj'
 const conversations = [
@@ -13,7 +12,8 @@ const conversations = [
     subject: 'subject',
     participants: [],
     messages: [],
-    startDate: expect.any(Date)
+    startDate: expect.any(Date),
+    populateMessages: jest.fn(function () { return this })
   }
 ]
 
