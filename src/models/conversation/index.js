@@ -38,12 +38,10 @@ conversationSchema.methods.populateMessages = async function populateMessages ()
   }
 }
 
-conversationSchema.statics.updateUnreadStatus = function findAllWithParticipants ({ userId }) {
+conversationSchema.statics.findAllWithParticipants = function findAllWithParticipants ({ userId }) {
   if (!userId) throw new Error('Missing required userId')
 
-  const filter = { participants: userId }
-
-  return this.find(filter)
+  return this.find({ participants: userId })
     .select('subject startDate messages participants')
     .populate({
       path: 'participants',
@@ -52,7 +50,7 @@ conversationSchema.statics.updateUnreadStatus = function findAllWithParticipants
     .exec()
 }
 
-conversationSchema.statics.findAllWithParticipants = function findOneWithParticipants ({ conversationId }) {
+conversationSchema.statics.findOneWithParticipants = function findOneWithParticipants ({ conversationId }) {
   if (!conversationId) throw new Error('Missing required conversationId')
 
   return this.find({ _id: conversationId })
@@ -63,13 +61,6 @@ conversationSchema.statics.findAllWithParticipants = function findOneWithPartici
       select: 'username name avatarUrl'
     })
     .exec()
-}
-
-conversationSchema.statics.findOneWithParticipants = function updateUnreadStatus ({ target, status }) {
-  const updates = { '$set': { 'unread': status } }
-  const options = { new: true }
-
-  return this.findOneAndUpdate(target, updates, options).exec()
 }
 
 /* ================================ EXPORT ================================= */

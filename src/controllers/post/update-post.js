@@ -26,7 +26,7 @@ exports = module.exports = async function updatePost ({ postId, userId, body }) 
   const updates = { ...body, updatedAt: new Date().toISOString() }
   const options = { new: true }
 
-  const updatedPost = await Post.updatePost({ target, updates, options })
+  const updatedPost = await Post.findOneAndUpdate(target, updates, options).exec()
   if (!updatedPost) throw errorWithStatus(new Error('Post not found!'), 404)
 
   // hydrate post with author info

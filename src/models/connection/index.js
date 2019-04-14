@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const getStatusFromType = require('./get-status-from-type')
 
 /* ================================ SCHEMA ================================= */
 
@@ -47,9 +46,18 @@ connectionSchema.statics.updateConnectionStatus = function updateConnectionStatu
   if (!target) throw new Error('Missing required target')
   if (!type) throw new Error('Missing required type')
 
-  const status = getStatusFromType(type)
+  const status = this.getStatusFromType(type)
   const options = { new: true } // return updated document
   return this.findOneAndUpdate(target, status, options).exec()
+}
+
+connectionSchema.statics.getStatusFromType = function getStatusFromType (type) {
+  switch (type) {
+    case 'ACCEPT': return { status: 'accepted', dateAccepted: Date.now() }
+    case 'DECLINE': return { status: 'declined', dateDeclined: Date.now() }
+    case 'DEACTIVATE': return { status: 'inactive', dateExpired: Date.now() }
+    default: return {}
+  }
 }
 
 /* ================================ EXPORT ================================= */

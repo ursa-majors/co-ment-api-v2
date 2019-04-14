@@ -44,44 +44,45 @@ const post = {
 describe('updatePost', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    Post.findOneAndUpdate = jest.fn(() => Post)
   })
 
   it('should return updated post on success', async () => {
     expect.assertions(3)
     const body = { title: 'Updated Title' }
 
-    Post.updatePost = jest.fn().mockResolvedValue(post)
+    Post.exec = jest.fn().mockResolvedValue(post)
 
     const actual = await updatePost({ postId, userId, body })
     expect(actual).toEqual({
       message: 'Post updated',
       post: expect.any(Object)
     })
-    expect(Post.updatePost).toHaveBeenCalledTimes(1)
-    expect(Post.updatePost).toHaveBeenCalledWith({
-      target: { _id: postId, author: userId },
-      updates: { ...body, updatedAt: expect.any(String) },
-      options: { new: true }
-    })
+    expect(Post.findOneAndUpdate).toHaveBeenCalledTimes(1)
+    expect(Post.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: postId, author: userId },
+      { ...body, updatedAt: expect.any(String) },
+      { new: true }
+    )
   })
 
   it('should throw with 404 status if cannot find post to update', async () => {
     expect.assertions(3)
     const body = { title: 'Updated Title' }
 
-    Post.updatePost = jest.fn().mockResolvedValue(null)
+    Post.exec = jest.fn().mockResolvedValue(null)
 
     await expect(updatePost({ postId, userId, body })).rejects
       .toThrow(expect.objectContaining({
         status: 404,
         message: expect.stringContaining('Post not found')
       }))
-    expect(Post.updatePost).toHaveBeenCalledTimes(1)
-    expect(Post.updatePost).toHaveBeenCalledWith({
-      target: { _id: postId, author: userId },
-      updates: { ...body, updatedAt: expect.any(String) },
-      options: { new: true }
-    })
+    expect(Post.findOneAndUpdate).toHaveBeenCalledTimes(1)
+    expect(Post.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: postId, author: userId },
+      { ...body, updatedAt: expect.any(String) },
+      { new: true }
+    )
   })
 
   it('should throw with 400 status when missing postId', async () => {
@@ -120,10 +121,10 @@ describe('updatePost', () => {
     expect.assertions(2)
     const body = { title: 'Updated Title' }
 
-    Post.updatePost = jest.fn().mockRejectedValue(new Error('Post Borked'))
+    Post.exec = jest.fn().mockRejectedValue(new Error('Post Borked'))
 
     await expect(updatePost({ postId, userId, body })).rejects
       .toThrow(/Post Borked/)
-    expect(Post.updatePost).toHaveBeenCalledTimes(1)
+    expect(Post.findOneAndUpdate).toHaveBeenCalledTimes(1)
   })
 })

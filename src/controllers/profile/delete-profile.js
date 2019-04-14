@@ -10,6 +10,9 @@ const { errorWithStatus } = require('../../utils')
  * @returns  {Object}  Deleted user profile on success
  */
 exports = module.exports = async function deleteProfile ({ userId, token }) {
+  if (userId == null) throw errorWithStatus(new Error('Missing required userId param'), 400)
+  if (token == null) throw errorWithStatus(new Error('Missing required token param'), 400)
+
   // ensure user is allowed to update target user profile
   if (userId !== token._id) {
     throw errorWithStatus(new Error('Delete profile not permitted'), 403)
@@ -18,7 +21,7 @@ exports = module.exports = async function deleteProfile ({ userId, token }) {
   const targetUser = { _id: userId, username: token.username }
 
   // first delete user's profile ...
-  const deletedProfile = await User.deleteUser(targetUser)
+  const deletedProfile = await User.findOneAndRemove(targetUser).exec()
   if (!deletedProfile) {
     throw errorWithStatus(new Error('Delete error: user not found'), 404)
   }

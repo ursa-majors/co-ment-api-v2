@@ -21,9 +21,7 @@ describe('incrementViews', () => {
     const actual = await incrementViews({ postId, userId })
     expect(actual).toEqual({ message: 'Post updated' })
     expect(Post.incrementViews).toHaveBeenCalledTimes(1)
-    expect(Post.incrementViews).toHaveBeenCalledWith({
-      target: { _id: postId, author: { $ne: userId } }
-    })
+    expect(Post.incrementViews).toHaveBeenCalledWith({ postId, userId })
   })
 
   it('should return unsuccess message on no update', async () => {
@@ -34,9 +32,7 @@ describe('incrementViews', () => {
     const actual = await incrementViews({ postId, userId })
     expect(actual).toEqual({ message: 'Post not updated' })
     expect(Post.incrementViews).toHaveBeenCalledTimes(1)
-    expect(Post.incrementViews).toHaveBeenCalledWith({
-      target: { _id: postId, author: { $ne: userId } }
-    })
+    expect(Post.incrementViews).toHaveBeenCalledWith({ postId, userId })
   })
 
   it('should handle errors thrown from DB calls', async () => {
@@ -48,5 +44,15 @@ describe('incrementViews', () => {
     await expect(incrementViews({ postId, userId })).rejects
       .toThrow(/Borked/)
     expect(Post.incrementViews).toHaveBeenCalledTimes(1)
+  })
+
+  it(`should throw with 400 status if missing 'postId' param`, async () => {
+    await expect(incrementViews({ userId })).rejects
+      .toThrow(/Missing required postId/)
+  })
+
+  it(`should throw with 400 status if missing 'userId' param`, async () => {
+    await expect(incrementViews({ postId })).rejects
+      .toThrow(/Missing required userId/)
   })
 })

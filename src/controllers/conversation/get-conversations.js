@@ -13,7 +13,7 @@ exports = module.exports = async function getConversations ({ userId }) {
   if (!userId) throw errorWithStatus(new Error('Missing required userId'), 400)
 
   const conversations = await Conversation.findAllWithParticipants({ userId })
-    .then(populateMessages)
+    .then(convos => convos.map(conv => populateMessages(conv._id)))
     .then(addConversationMetadata(userId))
 
   // set user's alreadyContacted flag to false so they rec

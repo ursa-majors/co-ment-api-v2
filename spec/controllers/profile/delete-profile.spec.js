@@ -8,6 +8,9 @@ jest.mock('../../../src/models/user')
 jest.mock('../../../src/models/post')
 
 describe('deleteProfile', () => {
+  beforeAll(() => {
+    User.findOneAndRemove = jest.fn(() => User)
+  })
   beforeEach(() => {
     jest.clearAllMocks()
   })
@@ -17,15 +20,15 @@ describe('deleteProfile', () => {
     const userId = '123'
     const name = 'Leroy'
     const token = { _id: userId, username: name }
-    User.deleteUser = jest.fn().mockResolvedValue(expect.any(Object))
+    User.exec = jest.fn().mockResolvedValue(expect.any(Object))
     Post.deletePostsByAuthor = jest.fn().mockResolvedValue(true)
 
     const actual = await deleteProfile({ userId, token })
-    expect(User.deleteUser).toHaveBeenCalledTimes(1)
-    expect(User.deleteUser).toHaveBeenCalledWith(expect.objectContaining({
+    expect(User.findOneAndRemove).toHaveBeenCalledTimes(1)
+    expect(User.findOneAndRemove).toHaveBeenCalledWith({
       _id: userId,
       username: name
-    }))
+    })
     expect(Post.deletePostsByAuthor).toHaveBeenCalledTimes(1)
     expect(Post.deletePostsByAuthor).toHaveBeenCalledWith(expect.objectContaining({
       authorId: userId
@@ -38,7 +41,7 @@ describe('deleteProfile', () => {
     const userId = '123'
     const name = 'Leroy'
     const token = { _id: 'not123', username: name }
-    User.deleteUser = jest.fn()
+    User.exec = jest.fn()
     Post.deletePostsByAuthor = jest.fn()
 
     await expect(deleteProfile({ userId, token })).rejects
@@ -46,7 +49,7 @@ describe('deleteProfile', () => {
         status: 403,
         message: 'Delete profile not permitted'
       }))
-    expect(User.deleteUser).not.toHaveBeenCalled()
+    expect(User.findOneAndRemove).not.toHaveBeenCalled()
     expect(Post.deletePostsByAuthor).not.toHaveBeenCalled()
   })
 
@@ -55,7 +58,7 @@ describe('deleteProfile', () => {
     const userId = '123'
     const name = 'Leroy'
     const token = { _id: userId, username: name }
-    User.deleteUser = jest.fn().mockResolvedValue(undefined)
+    User.exec = jest.fn().mockResolvedValue(undefined)
     Post.deletePostsByAuthor = jest.fn()
 
     await expect(deleteProfile({ userId, token })).rejects
@@ -63,11 +66,11 @@ describe('deleteProfile', () => {
         status: 404,
         message: 'Delete error: user not found'
       }))
-    expect(User.deleteUser).toHaveBeenCalledTimes(1)
-    expect(User.deleteUser).toHaveBeenCalledWith(expect.objectContaining({
+    expect(User.findOneAndRemove).toHaveBeenCalledTimes(1)
+    expect(User.findOneAndRemove).toHaveBeenCalledWith({
       _id: userId,
       username: name
-    }))
+    })
     expect(Post.deletePostsByAuthor).not.toHaveBeenCalled()
   })
 
@@ -76,7 +79,7 @@ describe('deleteProfile', () => {
     const userId = '123'
     const name = 'Leroy'
     const token = { _id: userId, username: name }
-    User.deleteUser = jest.fn().mockResolvedValue(expect.any(Object))
+    User.exec = jest.fn().mockResolvedValue(expect.any(Object))
     Post.deletePostsByAuthor = jest.fn().mockResolvedValue(false)
 
     await expect(deleteProfile({ userId, token })).rejects
@@ -84,11 +87,11 @@ describe('deleteProfile', () => {
         status: 500,
         message: 'Failed to delete posts'
       }))
-    expect(User.deleteUser).toHaveBeenCalledTimes(1)
-    expect(User.deleteUser).toHaveBeenCalledWith(expect.objectContaining({
+    expect(User.findOneAndRemove).toHaveBeenCalledTimes(1)
+    expect(User.findOneAndRemove).toHaveBeenCalledWith({
       _id: userId,
       username: name
-    }))
+    })
     expect(Post.deletePostsByAuthor).toHaveBeenCalledTimes(1)
     expect(Post.deletePostsByAuthor).toHaveBeenCalledWith(expect.objectContaining({
       authorId: userId
@@ -99,7 +102,7 @@ describe('deleteProfile', () => {
     const userId = '123'
     const name = 'Leroy'
     const token = { _id: userId, username: name }
-    User.deleteUser = jest.fn().mockRejectedValue(new Error('boom'))
+    User.exec = jest.fn().mockRejectedValue(new Error('boom'))
     await expect(deleteProfile({ userId, token })).rejects
       .toThrow(/boom/)
   })

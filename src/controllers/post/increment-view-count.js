@@ -1,6 +1,7 @@
 'use strict'
 
 const Post = require('../../models/post')
+const { errorWithStatus } = require('../../utils')
 
 /**
  * Increment a post's views count
@@ -8,11 +9,9 @@ const Post = require('../../models/post')
  * @returns  {Object}  Success message only
  */
 exports = module.exports = async function incrementViews ({ postId, userId }) {
-  const target = {
-    _id: postId,
-    author: { $ne: userId } // match if post author !== requesting user
-  }
+  if (postId == null) throw errorWithStatus(new Error('Missing required postId param'), 400)
+  if (userId == null) throw errorWithStatus(new Error('Missing required userId param'), 400)
 
-  const result = await Post.incrementViews({ target })
+  const result = await Post.incrementViews({ postId, userId })
   return { message: result ? 'Post updated' : 'Post not updated' }
 }

@@ -25,6 +25,10 @@ const { parseSkill, errorWithStatus } = require('../../utils')
  * @returns  {Object}  Updated user profile on success
  */
 exports = module.exports = async function updateProfile ({ userId, token, body }) {
+  if (userId == null) throw errorWithStatus(new Error('Missing required userId param'), 400)
+  if (token == null) throw errorWithStatus(new Error('Missing required token param'), 400)
+  if (body == null) throw errorWithStatus(new Error('Missing required body param'), 400)
+
   // ensure user is allowed to update target user profile
   if (userId !== token._id) {
     throw errorWithStatus(new Error('Update profile not permitted'), 403)
@@ -39,7 +43,7 @@ exports = module.exports = async function updateProfile ({ userId, token, body }
     updates.skills = updates.skills.map(parseSkill)
   }
 
-  const updatedProfile = await User.updateUser({ target, updates, options })
+  const updatedProfile = await User.findOneAndUpdate(target, updates, options).exec()
   if (!updatedProfile) {
     throw errorWithStatus(new Error('Update error: user not found'), 404)
   }

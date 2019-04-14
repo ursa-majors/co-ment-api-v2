@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, unique: true, required: true },
   name: { type: String, trim: true },
   ghUserName: { type: String, trim: true },
-  ghProfile: Object,
+  ghProfile: Object, // do we use this ?????
   avatarUrl: { type: String, trim: true },
   location: { type: String, trim: true },
   about: { type: String, trim: true },
@@ -70,17 +70,6 @@ userSchema.methods.generateJwt = function generateJWT () {
   }
 
   return jwt.sign(payload, jwtSecret, options)
-}
-
-userSchema.statics.updateUser = function updateUser ({ target, updates, options = {} }) {
-  if (target == null) throw new Error('Missing required target param')
-  if (updates == null) throw new Error('Missing required updates param')
-  return this.findOneAndUpdate(target, updates, options).exec()
-}
-
-userSchema.statics.deleteUser = function deleteUser (target) {
-  if (target == null) throw new Error('Missing required target param')
-  return this.findOneAndRemove(target).exec()
 }
 
 /* ================================ EXPORT ================================= */

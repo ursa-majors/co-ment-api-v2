@@ -16,6 +16,10 @@ const res = {
 const next = jest.fn()
 
 describe('validate', () => {
+  beforeAll(() => {
+    User.findOneAndUpdate = jest.fn(() => User)
+  })
+
   beforeEach(() => {
     jest.clearAllMocks()
   })
@@ -27,7 +31,7 @@ describe('validate', () => {
     const mockUpdatedUser = {
       signupKey: { key: req.query.key }
     }
-    User.updateUser = jest.fn().mockResolvedValue(mockUpdatedUser)
+    User.exec = jest.fn().mockResolvedValue(mockUpdatedUser)
 
     await validate(req, res, next)
     expect(res.redirect).toHaveBeenCalledTimes(1)
@@ -42,7 +46,7 @@ describe('validate', () => {
     expect.assertions(3)
     req.query.uid = 'userId'
     req.query.key = 'somelonghexkey'
-    User.updateUser = jest.fn().mockResolvedValue(null)
+    User.exec = jest.fn().mockResolvedValue(null)
 
     await validate(req, res, next)
     expect(res.redirect).not.toHaveBeenCalled()
@@ -60,7 +64,7 @@ describe('validate', () => {
     const mockUpdatedUser = {
       signupKey: { key: 'noththesamelongasshexkey' }
     }
-    User.updateUser = jest.fn().mockResolvedValue(mockUpdatedUser)
+    User.exec = jest.fn().mockResolvedValue(mockUpdatedUser)
 
     await validate(req, res, next)
     expect(res.redirect).not.toHaveBeenCalled()
@@ -75,7 +79,7 @@ describe('validate', () => {
     expect.assertions(3)
     req.query.uid = 'userId'
     req.query.key = 'somelonghexkey'
-    User.updateUser = jest.fn().mockRejectedValue(new Error('Boom'))
+    User.exec = jest.fn().mockRejectedValue(new Error('Boom'))
 
     await validate(req, res, next)
     expect(res.redirect).not.toHaveBeenCalled()
