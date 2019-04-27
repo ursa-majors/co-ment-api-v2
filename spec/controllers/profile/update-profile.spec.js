@@ -19,14 +19,14 @@ describe('updateProfile', () => {
     const userId = '123'
     const name = 'Leroy'
     const token = { _id: userId, username: name }
-    const body = { email: 'leroy@example.com' }
+    const body = { email: 'leroy@example.com', skills: ['TDD'] }
     User.exec = jest.fn().mockResolvedValue(expect.any(Object))
 
     const actual = await updateProfile({ userId, token, body })
     expect(actual).toEqual(expect.any(Object))
     expect(User.findOneAndUpdate).toHaveBeenCalledWith(
       { _id: userId, username: name },
-      { email: body.email },
+      { email: body.email, skills: ['Test Driven Development'] },
       { new: true }
     )
   })
@@ -79,6 +79,20 @@ describe('updateProfile', () => {
       .toThrow(expect.objectContaining({
         status: 400,
         message: 'Missing required token param'
+      }))
+  })
+
+  it(`should throw with 403 status if userId !== 'token' ID`, async () => {
+    const userId = '123'
+    const name = 'Leroy'
+    const token = { _id: '404', username: name }
+    const body = { email: 'leroy@example.com' }
+    User.exec = jest.fn().mockResolvedValue(undefined)
+
+    await expect(updateProfile({ userId, token, body })).rejects
+      .toThrow(expect.objectContaining({
+        status: 403,
+        message: 'Update profile not permitted'
       }))
   })
 
