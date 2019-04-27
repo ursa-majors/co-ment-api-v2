@@ -7,6 +7,12 @@ const jwtSecret = process.env.JWT_SECRET
 
 // @TODO -- LOTS OF VALIDATIONS!!!
 
+const ARRAY_LENGTH_LIMIT = 64
+
+const nameRegex = /[^{}[\]\r\n()<>?$]+$/
+const urlRegex = /(www\.)?[-a-zA-Z0-9@:%._+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_+.~#?&//=]*)/
+const validateLengthLimit = (value) => value.length <= ARRAY_LENGTH_LIMIT
+
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -34,52 +40,68 @@ const userSchema = new mongoose.Schema({
     trim: true,
     minlength: 2,
     maxlength: 64,
-    match: /[^{}[\]\r\n()<>?$]+$/
+    match: nameRegex
   },
+  // Username may only contain alphanumeric characters or single hyphens, and
+  // cannot begin or end with a hyphen (https://github.com/join)
   ghUserName: {
     type: String,
-    trim: true
-  },
-  ghProfile: Object, // do we use this ?????
-  avatarUrl: {
-    type: String,
-    trim: true
+    trim: true,
+    minlength: 1,
+    maxlength: 39,
+    match: /^[a-zA-Z0-9]+([a-zA-Z0-9-]+)[a-zA-Z0-9]$/
   },
   location: {
     type: String,
-    trim: true
+    trim: true,
+    minlength: 2,
+    maxlength: 64,
+    match: nameRegex
   },
   about: {
     type: String,
-    trim: true
+    trim: true,
+    minlength: 2,
+    maxlength: 512
   },
   gender: {
     type: String,
     trim: true
   },
+  avatarUrl: {
+    type: String,
+    trim: true,
+    match: urlRegex
+  },
   github: {
     type: String,
-    trim: true
+    trim: true,
+    match: urlRegex
   },
   twitter: {
     type: String,
-    trim: true
+    trim: true,
+    match: urlRegex
   },
   facebook: {
     type: String,
-    trim: true
+    trim: true,
+    match: urlRegex
   },
   link: {
     type: String,
-    trim: true
+    trim: true,
+    match: urlRegex
   },
   linkedin: {
     type: String,
-    trim: true
+    trim: true,
+    match: urlRegex
   },
   codepen: {
     type: String,
-    trim: true
+    trim: true,
+    match: urlRegex
   },
   signupKey: {
     key: String,
@@ -95,9 +117,30 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  languages: [String],
-  certs: [String],
-  skills: [String],
+  languages: {
+    type: [{
+      type: String,
+      minlength: 1,
+      maxlength: 64
+    }],
+    validate: [validateLengthLimit, `{PATH} exceeds array length limit of ${ARRAY_LENGTH_LIMIT}`]
+  },
+  certs: {
+    type: [{
+      type: String,
+      minlength: 1,
+      maxlength: 64
+    }],
+    validate: [validateLengthLimit, `{PATH} exceeds array length limit of ${ARRAY_LENGTH_LIMIT}`]
+  },
+  skills: {
+    type: [{
+      type: String,
+      minlength: 1,
+      maxlength: 64
+    }],
+    validate: [validateLengthLimit, `{PATH} exceeds array length limit of ${ARRAY_LENGTH_LIMIT}`]
+  },
   time_zone: {
     type: String,
     trim: true
