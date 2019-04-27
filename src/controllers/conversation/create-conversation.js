@@ -2,53 +2,38 @@
 
 const Conversation = require('../../models/conversation')
 const Message = require('../../models/message')
+const { errorWithStatus } = require('../../utils')
 
-/* ============================ ROUTE HANDLERS ============================= */
-
-// CREATE NEW CONVERSATION
-//   Example: POST >> /api/conversations
-//   Secured: yes, valid JWT required
-//   Expects:
-//     1) user '_id' from JWT token
-//     2) request body properties
-//          recipientId : String
-//          message     : String
-//          subject     : String
-//        }
-//   Returns: success message on success
-exports = module.exports = async function createConversation (req, res, next) {
-  if (!req.body.recipientId) {
-    return res.status(400).json({ message: 'Missing recipient ID.' })
-  }
-
-  if (!req.body.message) {
-    return res.status(400).json({ message: 'Missing message.' })
-  }
-
-  if (!req.body.subject) {
-    return res.status(400).json({ message: 'Missing subject.' })
-  }
+/**
+ * Create a new onversation
+ * Secured - valid JWT required
+ * request body properties:
+ *   {String} recipientId
+ *   {String} message
+ *   {String} subject
+ * @returns  {Object}  success message & conversation object
+ */
+exports = module.exports = async function createConversation ({ userId, body }) {
+  if (body.recipientId == null) throw errorWithStatus(new Error('Missing recipient ID.'), 400)
+  if (body.message == null) throw errorWithStatus(new Error('Missing message.'), 400)
+  if (body.subject == null) throw errorWithStatus(new Error('Missing subject.'), 400)
 
   const conversation = new Conversation({
-    subject: req.body.subject,
-    participants: [req.token._id, req.body.recipientId]
+    subject: body.subject,
+    participants: [userId, body.recipientId]
   })
 
   const message = new Message({
     conversation: conversation._id,
-    body: req.body.message,
-    author: req.token._id,
-    recipient: req.body.recipientId,
+    body: body.message,
+    author: userId,
+    recipient: body.recipientId,
     originatedFrom: 'connection'
   })
 
   conversation.messages.push(message._id)
 
-  try {
-    await message.save()
-    await conversation.save()
-    return res.status(200).json({ message: 'Conversation started!', conversation })
-  } catch (err) {
-    return next(err)
-  }
+  await message.save()
+  await conversation.save()
+  return { message: 'Conversation started!', conversation }
 }

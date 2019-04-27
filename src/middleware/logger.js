@@ -4,7 +4,7 @@ const bunyan = require('bunyan')
 const uuidV4 = require('uuid/v4')
 const { maskAuthHeader } = require('../utils')
 
-exports = module.exports = () => (req, res, next) => {
+const makeLoggerMiddleware = () => (req, res, next) => {
   req.log = bunyan.createLogger({
     name: 'co/ment API',
     requestId: uuidV4(),
@@ -33,4 +33,10 @@ function _resSerializer (res) {
     statusCode: res.statusCode,
     headers: maskAuthHeader(res.getHeaders())
   }
+}
+
+exports = module.exports = {
+  makeLoggerMiddleware,
+  _reqSerializer,
+  _resSerializer
 }

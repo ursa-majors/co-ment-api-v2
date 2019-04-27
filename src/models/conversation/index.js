@@ -1,7 +1,7 @@
 'use strict'
 
 const mongoose = require('mongoose')
-const { statics } = require('./plugins')
+const Message = require('../message')
 
 const conversationSchema = new mongoose.Schema({
   subject: {
@@ -23,11 +23,45 @@ const conversationSchema = new mongoose.Schema({
   }
 })
 
-// plug in static class methods
+/* ================================ METHODS ================================ */
 
-conversationSchema.plugin(statics.updateUnreadStatus)
-conversationSchema.plugin(statics.findAllWithParticipants)
-conversationSchema.plugin(statics.findOneWithParticipants)
+conversationSchema.methods.populateMessages = async function populateMessages () {
+  // get all messages for a conversation. Updates 'unread' status to false
+  const messages = await Message.findByConversationAndRead({ conversationId: this._id })
+
+  return {
+    _id: this._id,
+    subject: this.subject,
+    participants: this.participants,
+    startDate: this.startDate,
+    messages
+  }
+}
+
+conversationSchema.statics.findAllWithParticipants = function findAllWithParticipants ({ userId }) {
+  if (!userId) throw new Error('Missing required userId')
+
+  return this.find({ participants: userId })
+    .select('subject startDate messages participants')
+    .populate({
+      path: 'participants',
+      select: 'username name avatarUrl'
+    })
+    .exec()
+}
+
+conversationSchema.statics.findOneWithParticipants = function findOneWithParticipants ({ conversationId }) {
+  if (!conversationId) throw new Error('Missing required conversationId')
+
+  return this.find({ _id: conversationId })
+    .limit(1)
+    .select('subject startDate messages participants')
+    .populate({
+      path: 'participants',
+      select: 'username name avatarUrl'
+    })
+    .exec()
+}
 
 /* ================================ EXPORT ================================= */
 

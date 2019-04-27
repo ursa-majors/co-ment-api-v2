@@ -1,6 +1,5 @@
 'use strict'
 
-require('dotenv').config()
 const dbUname = process.env.DB_UNAME
 const dbPwd = process.env.DB_PWD
 
