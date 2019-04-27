@@ -14,11 +14,14 @@ const { errorWithStatus } = require('../../utils')
 //   Returns: redirect to client-side validation landing page
 exports = module.exports = async function validate (req, res, next) {
   const { uid, key } = req.query
+  if (uid == null) throw errorWithStatus(new Error(`Missing required 'uid' param`), 400)
+  if (key == null) throw errorWithStatus(new Error(`Missing required 'key' param`), 400)
+
   const target = { _id: uid }
   const updates = { validated: true }
 
   try {
-    const updatedUser = await User.updateUser({ target, updates })
+    const updatedUser = await User.findOneAndUpdate(target, updates).exec()
     if (!updatedUser) {
       throw errorWithStatus(new Error('No user with that ID found'), 404)
     }

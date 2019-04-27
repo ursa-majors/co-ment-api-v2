@@ -5,6 +5,6 @@ exports = module.exports = Object.freeze({
   login: require('./login'),
   register: require('./register'),
   validate: require('./validate'),
-  sendPwReset: require('./sendPwReset'),
-  resetPassword: require('./resetPassword')
+  sendPwReset: require('./send-password-reset'),
+  resetPassword: require('./reset-password')
 })

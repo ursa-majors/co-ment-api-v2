@@ -2,30 +2,26 @@
 
 const Conversation = require('../../models/conversation')
 const User = require('../../models/user')
-const { populateMessages } = require('../../utils')
+const { errorWithStatus } = require('../../utils')
 
-// GET ALL USERS CONVERSATIONS WITH MESSAGES & EXTRA METADATA
-//   Example: GET >> /api/conversations
-//   Secured: yes, valid JWT required
-//   Expects:
-//     1) user '_id' from JWT token
-//   Returns: array of user's conversations with most recent messages.
-exports = module.exports = async function getConversations (req, res, next) {
-  const userId = req.token._id
-  try {
-    const conversations = await Conversation.findAllWithParticipants({ userId })
-      .then(populateMessages)
-      .then(addConversationMetadata(userId))
+/**
+ * Get all user's conversations with participants, messages & metadata
+ * Secured - valid JWT required
+ * @returns  {Array}  Of user's conversations with most recent messages
+ */
+exports = module.exports = async function getConversations ({ userId }) {
+  if (!userId) throw errorWithStatus(new Error('Missing required userId'), 400)
 
-    // set user's alreadyContacted flag to false so they rec
-    // reminders of new messages
-    const updates = { $set: { 'contactMeta.alreadyContacted': false } }
-    await User.findByIdAndUpdate(userId, updates).exec()
+  const conversations = await Conversation.findAllWithParticipants({ userId })
+    .then(convos => Promise.all(convos.map(conv => conv.populateMessages())))
+    .then(addConversationMetadata(userId))
 
-    return res.status(200).json(conversations)
-  } catch (err) {
-    return next(err)
-  }
+  // set user's alreadyContacted flag to false so they receive
+  // reminders of new messages
+  const updates = { $set: { 'contactMeta.alreadyContacted': false } }
+  await User.findByIdAndUpdate(userId, updates).exec()
+
+  return conversations
 }
 
 // helpers

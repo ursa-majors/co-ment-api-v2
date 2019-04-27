@@ -1,5 +1,4 @@
 const mongoose = require('mongoose')
-const { statics } = require('./plugins')
 
 /* ================================ SCHEMA ================================= */
 
@@ -34,10 +33,32 @@ const connectionSchema = new mongoose.Schema({
   }
 })
 
-// plug in static class methods
+/* ================================ METHODS ================================ */
 
-connectionSchema.plugin(statics.findOwnConnections)
-connectionSchema.plugin(statics.updateConnectionStatus)
+connectionSchema.statics.findOwnConnections = function findOwnConnections ({ target }) {
+  if (!target) throw new Error('Missing required target param')
+
+  const filter = { $or: [{ 'mentor.id': target }, { 'mentee.id': target }] }
+  return this.find(filter).exec()
+}
+
+connectionSchema.statics.updateConnectionStatus = function updateConnectionStatus ({ target, type }) {
+  if (!target) throw new Error('Missing required target')
+  if (!type) throw new Error('Missing required type')
+
+  const status = this.getStatusFromType(type)
+  const options = { new: true } // return updated document
+  return this.findOneAndUpdate(target, status, options).exec()
+}
+
+connectionSchema.statics.getStatusFromType = function getStatusFromType (type) {
+  switch (type) {
+    case 'ACCEPT': return { status: 'accepted', dateAccepted: Date.now() }
+    case 'DECLINE': return { status: 'declined', dateDeclined: Date.now() }
+    case 'DEACTIVATE': return { status: 'inactive', dateExpired: Date.now() }
+    default: return {}
+  }
+}
 
 /* ================================ EXPORT ================================= */
 

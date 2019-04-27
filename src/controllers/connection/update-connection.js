@@ -1,23 +1,19 @@
 'use strict'
 
 const Connection = require('../../models/connection')
+const { errorWithStatus } = require('../../utils')
 
-// Update a connection record's status & status date
-//   Example: POST >> /api/updateconnection
-//   Secured: yes, valid JWT required
-//   Expects:
-//     1) request body properties : {
-//          type : String
-//        }
-//   Returns: updated connection record on success
-exports = module.exports = async function updateConnection (req, res, next) {
-  const target = { _id: req.params.id }
-  const { type } = req.body
+/**
+ * Update a connection record's status & status date
+ * Secured - valid JWT required
+ * @returns  {Object}  Updated connection record
+ */
+exports = module.exports = async function updateConnection ({ connId, type } = {}) {
+  if (!connId) throw errorWithStatus(new Error('Missing required connId'), 400)
+  if (!type) throw errorWithStatus(new Error('Missing required type'), 400)
 
-  try {
-    const conn = await Connection.updateConnectionStatus({ target, type })
-    return res.status(200).json({ conn })
-  } catch (err) {
-    return next(err)
-  }
+  const target = { _id: connId }
+
+  const conn = await Connection.updateConnectionStatus({ target, type })
+  return conn
 }
