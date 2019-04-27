@@ -2,7 +2,8 @@ module.exports = {
   collectCoverage: false,
   collectCoverageFrom: [
     'src/**/*.{js,jsx}',
-    '!**/node_modules/**'
+    '!**/node_modules/**',
+    '!**/index.js'
   ],
   coverageDirectory: './coverage',
   coverageThreshold: {
