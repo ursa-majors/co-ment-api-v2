@@ -7,9 +7,16 @@ exports = module.exports = () => (req, res, next) => {
 
   // on 'finish' events, log the response
   res.on('finish', () => {
-    const statusMessage = STATUS_CODES[res.statusCode]
-    const level = res.statusCode < 400 ? 'info' : 'error'
-    req.log[level](`Resolved ${req.method.toUpperCase()} >> ${res.statusCode} ${statusMessage}`)
+    const { statusCode } = res
+    let data = {}
+
+    if (req.token && req.token._id) {
+      data.userId = req.token._id
+    }
+
+    const level = statusCode < 400 ? 'info' : 'error'
+    const msg = `Resolved ${req.method.toUpperCase()} >> ${statusCode} ${STATUS_CODES[statusCode]}`
+    req.log[level]({ data }, msg)
   })
   next()
 }
