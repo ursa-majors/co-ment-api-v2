@@ -4,5 +4,6 @@ exports = module.exports = Object.freeze({
   errorWithStatus: require('./error-with-status'),
   findObjProperty: require('./find-obj-property'),
   maskAuthHeader: require('./mask-auth-header'),
-  parseSkill: require('./skills-parser')
+  parseSkill: require('./skills-parser'),
+  DbLogStream: require('./DbLogStream')
 })
