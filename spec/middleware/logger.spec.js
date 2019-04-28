@@ -55,4 +55,18 @@ describe('_resSerializer', () => {
       }
     })
   })
+
+  it('should return malformed response objects as-is', () => {
+    reqResNext.res.getHeaders = function () { return this.headers }
+    delete reqResNext.res.statusCode
+    reqResNext.res.headers = { authorization: 'should be in the clear' }
+    expect(_resSerializer(reqResNext.res)).toEqual({
+      getHeaders: expect.any(Function),
+      status: expect.any(Function),
+      json: expect.any(Function),
+      headers: {
+        authorization: 'should be in the clear'
+      }
+    })
+  })
 })

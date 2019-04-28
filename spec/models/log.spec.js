@@ -4,52 +4,85 @@ const Log = require('../../src/models/log')
 describe(`Log model`, () => {
   let log
   const mockLog = {
-    category: 'engagement_email',
-    affectedUsers: [{
-      email: 'mockUserEmail',
-      username: 'mockUserUsername',
-      name: 'mockUserName',
-      _id: 'mockUserId'
-    }],
-    actionTaken: 'mockAction'
+    msg: 'Resolved GET >> 200 OK',
+    requestId: 'b56c30c6-1960-403b-858b-c588b21d519f',
+    level: 30,
+    name: 'co/ment API',
+    time: '2019-04-28T13:02:00.966Z',
+    data: { userId: '5c89e3185e0f4b215d29d08a' }
   }
 
   beforeEach(() => {
     log = _cloneDeep(mockLog)
   })
 
-  it(`should validate 'category' existence`, async () => {
-    delete log.category
+  it(`should validate 'msg' existence`, async () => {
+    delete log.msg
     const l = new Log(log)
     await expect(l.validate()).rejects
-      .toThrow(/Log validation failed.*category.*required/)
+      .toThrow(/Log validation failed.*msg.*required/)
   })
 
-  it(`should validate 'category' type`, async () => {
-    log.category = ['arrays are not strings']
+  it(`should cast non-string 'msg's to valid strings`, async () => {
+    log.msg = false
     const l = new Log(log)
-    await expect(l.validate()).rejects
-      .toThrow(/Log validation failed.*not a valid enum value/)
+    await expect(l.validate()).resolves.toBeUndefined()
+    expect(l.msg).toEqual('false')
   })
 
-  it(`should validate 'affectedUsers' type`, async () => {
-    log.affectedUsers = ['strings are not objects']
+  it(`should validate 'requestId' existence`, async () => {
+    delete log.requestId
     const l = new Log(log)
     await expect(l.validate()).rejects
-      .toThrow(/Log validation failed: affectedUsers: Cast to Array failed/)
+      .toThrow(/Log validation failed.*requestId.*required/)
   })
 
-  it(`should validate 'actionTaken' existence`, async () => {
-    delete log.actionTaken
+  it(`should cast non-string 'requestId's to valid strings`, async () => {
+    log.requestId = false
     const l = new Log(log)
-    await expect(l.validate()).rejects
-      .toThrow(/Log validation failed.*actionTaken.*required/)
+    await expect(l.validate()).resolves.toBeUndefined()
+    expect(l.requestId).toEqual('false')
   })
 
-  it(`should validate 'actionTaken' type`, async () => {
-    log.actionTaken = { this: 'is not a string' }
+  it(`should validate 'level' existence`, async () => {
+    delete log.level
     const l = new Log(log)
     await expect(l.validate()).rejects
-      .toThrow(/Log validation failed: actionTaken/)
+      .toThrow(/Log validation failed.*level.*required/)
+  })
+
+  it(`should validate 'level' type`, async () => {
+    log.level = [false, 'not a number']
+    const l = new Log(log)
+    await expect(l.validate()).rejects
+      .toThrow(/Log validation failed: level: Cast to Number failed/)
+  })
+
+  it(`should validate 'name' existence`, async () => {
+    delete log.name
+    const l = new Log(log)
+    await expect(l.validate()).rejects
+      .toThrow(/Log validation failed.*name.*required/)
+  })
+
+  it(`should cast non-string 'name's to valid strings`, async () => {
+    log.name = false
+    const l = new Log(log)
+    await expect(l.validate()).resolves.toBeUndefined()
+    expect(l.name).toEqual('false')
+  })
+
+  it(`should validate 'time' existence`, async () => {
+    delete log.time
+    const l = new Log(log)
+    await expect(l.validate()).rejects
+      .toThrow(/Log validation failed.*time.*required/)
+  })
+
+  it(`should cast non-string 'time's to valid strings`, async () => {
+    log.time = false
+    const l = new Log(log)
+    await expect(l.validate()).resolves.toBeUndefined()
+    expect(l.time).toEqual('false')
   })
 })
