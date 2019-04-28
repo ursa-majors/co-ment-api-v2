@@ -1,28 +1,45 @@
-/* ================================= SETUP ================================= */
+'use strict'
 
 const mongoose = require('mongoose')
 
-/* ================================ SCHEMA ================================= */
-
 const logSchema = new mongoose.Schema({
-  category: {
+  msg: {
     type: String,
-    enum: ['engagement_email'],
     required: true
   },
-  affectedUsers: [{
-    email: { type: String },
-    username: { type: String },
-    name: { type: String },
-    _id: { type: String }
-  }],
-  actionTaken: {
+  requestId: {
     type: String,
     required: true
+  },
+  level: {
+    type: Number,
+    required: true
+  },
+  name: {
+    type: String,
+    required: true
+  },
+  time: {
+    type: String,
+    required: true
+  },
+  res: {
+    type: Object
+  },
+  req: {
+    type: Object
+  },
+  err: {
+    type: Object
+  },
+  data: {
+    type: Object
   }
-},
-{
-  timestamps: true
+}, {
+  capped: {
+    size: 256 * 4000, // 1 MB
+    max: 1000
+  }
 })
 
 /* ================================ EXPORT ================================= */
